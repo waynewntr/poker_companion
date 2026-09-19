@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import { analyzeBoardTexture } from "@/strategy/boardTexture";
 import { estimateRangeAdvantage } from "@/strategy/rangeAdvantage";
 import { estimateNutAdvantage } from "@/strategy/nutAdvantage";
+import { getTurnStrategy } from "@/strategy/turnStrategy";
+import { getRiverStrategy } from "@/strategy/riverStrategy";
 import { getFlopStrategy } from "@/strategy/flopStrategy";
 import { suggestBetSizes } from "@/strategy/betSizing";
 import type { PreFlopContext } from "@/domain/hand";
@@ -53,6 +55,46 @@ describe("estimateNutAdvantage", () => {
       { rank: "A", suit: "c" }, { rank: "7", suit: "d" }, { rank: "2", suit: "s" }
     ]);
     expect(estimateNutAdvantage(unknownContext, board)).toBe("NEUTRAL");
+  });
+});
+
+describe("missing position context returns NEUTRAL/LOW", () => {
+  it("estimateNutAdvantage returns NEUTRAL when villainPosition missing", () => {
+    const board = analyzeBoardTexture([
+      { rank: "A", suit: "c" }, { rank: "7", suit: "d" }, { rank: "2", suit: "s" }
+    ]);
+    const partialContext: PreFlopContext = {
+      heroPosition: "BTN",
+      preflopAggressor: "hero",
+      numPlayers: 2,
+    };
+    expect(estimateNutAdvantage(partialContext, board)).toBe("NEUTRAL");
+  });
+
+  it("getTurnStrategy returns INSUFFICIENT_CONTEXT when positions missing", () => {
+    const board = analyzeBoardTexture([
+      { rank: "A", suit: "c" }, { rank: "7", suit: "d" }, { rank: "2", suit: "s" }
+    ]);
+    const partialContext: PreFlopContext = {
+      preflopAggressor: "hero",
+      numPlayers: 2,
+    };
+    const r = getTurnStrategy(partialContext, board, 5);
+    expect(r.confidence).toBe("LOW");
+    expect(r.style).toBe("INSUFFICIENT_CONTEXT");
+  });
+
+  it("getRiverStrategy returns INSUFFICIENT_CONTEXT when positions missing", () => {
+    const board = analyzeBoardTexture([
+      { rank: "A", suit: "c" }, { rank: "7", suit: "d" }, { rank: "2", suit: "s" }
+    ]);
+    const partialContext: PreFlopContext = {
+      preflopAggressor: "hero",
+      numPlayers: 2,
+    };
+    const r = getRiverStrategy(partialContext, board, 5);
+    expect(r.confidence).toBe("LOW");
+    expect(r.style).toBe("INSUFFICIENT_CONTEXT");
   });
 });
 

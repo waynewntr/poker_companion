@@ -6,7 +6,7 @@ export function estimateNutAdvantage(
   context: PreFlopContext,
   board: BoardAnalysis,
 ): Advantage {
-  if (!context.preflopAggressor || !context.heroPosition) {
+  if (!context.preflopAggressor || !context.heroPosition || !context.villainPosition) {
     return "NEUTRAL";
   }
 

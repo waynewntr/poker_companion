@@ -13,7 +13,9 @@ export function getRiverStrategy(
   const nutAdvantage = estimateNutAdvantage(context, board);
 
   let confidence: StrategyConfidence =
-    context.numPlayers > 2 || !context.preflopAggressor ? "LOW" : "MEDIUM";
+    context.numPlayers > 2 || !context.preflopAggressor || !context.heroPosition || !context.villainPosition
+      ? "LOW"
+      : "MEDIUM";
 
   let style: StrategyStyle;
   let sizes: number[];
@@ -22,7 +24,9 @@ export function getRiverStrategy(
   if (confidence === "LOW") {
     style = "INSUFFICIENT_CONTEXT";
     sizes = [0.5, 0.75];
-    explanation = "Modern baseline: river strategy requires position and aggressor context.";
+    explanation = context.numPlayers > 2
+      ? "Multiway pot — bet less frequently with a stronger range than heads-up."
+      : "Insufficient position context for a reliable turn/river recommendation.";
   } else if (nutAdvantage === "HERO" && rangeAdvantage === "HERO") {
     style = "OVERBET_CANDIDATE";
     sizes = [1.0, 1.5, 2.0];
