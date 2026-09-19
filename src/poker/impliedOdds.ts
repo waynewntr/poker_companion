@@ -11,7 +11,7 @@ export function calculateImpliedOdds(
   effectiveStack?: number
 ): ImpliedOddsResult {
   if (probability <= 0 || call <= 0) {
-    return { futureWinningsRequired: Infinity, effectiveStackAvailable: effectiveStack, possible: false };
+    return { futureWinningsRequired: Infinity, ...(effectiveStack !== undefined ? { effectiveStackAvailable: effectiveStack } : {}), possible: false };
   }
   const totalRequired = call / probability;
   const futureWinningsRequired = Math.max(0, totalRequired - pot - call);
@@ -19,5 +19,5 @@ export function calculateImpliedOdds(
     ? futureWinningsRequired <= effectiveStack
     : futureWinningsRequired < pot * 2;
 
-  return { futureWinningsRequired, effectiveStackAvailable: effectiveStack, possible };
+  return { futureWinningsRequired, ...(effectiveStack !== undefined ? { effectiveStackAvailable: effectiveStack } : {}), possible };
 }
