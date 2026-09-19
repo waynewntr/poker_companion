@@ -1,5 +1,5 @@
 import { Card } from "../domain/cards";
-import { createDeck, removeCards } from "../domain/deck";
+import { createDeck, hasNoDuplicates, removeCards } from "../domain/deck";
 import { evaluateBestHand } from "./evaluator";
 
 export interface OutsResult {
@@ -9,7 +9,9 @@ export interface OutsResult {
 }
 
 export function calculateOuts(heroCards: Card[], board: Card[]): OutsResult {
-  if (board.length < 3) return { outs: [], count: 0, labels: [] };
+  if (board.length < 3 || board.length >= 5 || !hasNoDuplicates([...heroCards, ...board])) {
+    return { outs: [], count: 0, labels: [] };
+  }
 
   const used = [...heroCards, ...board];
   const unseen = removeCards(createDeck(), used);

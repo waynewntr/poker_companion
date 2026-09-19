@@ -33,6 +33,40 @@ describe("calculateOuts", () => {
     expect(result.outs).toHaveLength(0);
   });
 
+  it("spec §11: duplicate card (A♠ in hero and board) is not counted as an out", () => {
+    const heroCards = [
+      { rank: "A" as const, suit: "s" as const },
+      { rank: "K" as const, suit: "h" as const },
+    ];
+    const board = [
+      { rank: "A" as const, suit: "s" as const },
+      { rank: "9" as const, suit: "c" as const },
+      { rank: "2" as const, suit: "d" as const },
+    ];
+
+    const result = calculateOuts(heroCards, board);
+
+    expect(result.outs.every(c => !(c.rank === "A" && c.suit === "s"))).toBe(true);
+    expect(result.outs).toHaveLength(0);
+    expect(result.count).toBe(0);
+  });
+
+  it("returns 0 outs on the river (board.length === 5)", () => {
+    const result = calculateOuts(
+      [{ rank: "A", suit: "h" }, { rank: "8", suit: "h" }],
+      [
+        { rank: "K", suit: "h" },
+        { rank: "7", suit: "h" },
+        { rank: "2", suit: "c" },
+        { rank: "3", suit: "d" },
+        { rank: "J", suit: "s" },
+      ]
+    );
+
+    expect(result.count).toBe(0);
+    expect(result.outs).toHaveLength(0);
+  });
+
   it("counts overcard outs (A♠ K♠ | 9♦ 7♣ 2♥)", () => {
     const result = calculateOuts(
       [{ rank: "A", suit: "s" }, { rank: "K", suit: "s" }],
