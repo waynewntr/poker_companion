@@ -52,8 +52,8 @@ export default function Home() {
   const setGameMode = useHandStore((state) => state.setGameMode);
   const newHand = useHandStore((state) => state.newHand);
 
-  const heroCards = getHeroCards(slots);
-  const board = getBoardCards(slots);
+  const heroCards = useMemo(() => getHeroCards(slots), [slots]);
+  const board = useMemo(() => getBoardCards(slots), [slots]);
   const street = getCurrentStreet(slots);
   const effectiveStack = getEffectiveStack(heroStack, villainStack);
   const spr = getSPR(effectiveStack, pot);
@@ -202,7 +202,7 @@ export default function Home() {
         </div>
       </details>
 
-      {board.length >= 3 && decisionResult && (
+      {heroCards.length === 2 && board.length >= 3 && decisionResult && (
         <section className="space-y-4 rounded-lg border border-[#2A2A35] bg-[#1A1A1F] p-4">
           <p className="text-xs uppercase tracking-widest text-gray-500">Decision</p>
           <DecisionResultPanel result={decisionResult} />
@@ -218,7 +218,7 @@ export default function Home() {
         </section>
       )}
 
-      {board.length >= 3 && strategyResult && (
+      {heroCards.length === 2 && strategyResult && (
         <section className="rounded-lg border border-[#2A2A35] bg-[#1A1A1F] p-4">
           <StrategyPanel strategy={strategyResult} pot={pot} />
         </section>

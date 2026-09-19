@@ -1,17 +1,15 @@
 "use client";
 
-import { SUIT_SYMBOLS } from "@/domain/cards";
+import { SUIT_SYMBOLS, SUIT_TEXT_CLASS_MAP } from "@/domain/cards";
 import { useHandStore } from "@/state/handStore";
-import type { Card, Suit } from "@/domain/cards";
+import type { Card } from "@/domain/cards";
 import type { SlotName } from "@/state/handStore";
 
 function CardSlot({ card, slot, active }: { card: Card | null; slot: SlotName; active: boolean }) {
   const setActiveSlot = useHandStore(s => s.setActiveSlot);
   const clearSlot = useHandStore(s => s.clearSlot);
 
-  const suitClass = card
-    ? (card.suit === "h" || card.suit === "d" ? "text-red-400" : "text-white")
-    : "text-gray-600";
+  const suitClass = card ? SUIT_TEXT_CLASS_MAP[card.suit] : "text-gray-600";
 
   function handleClick() {
     if (card) {
