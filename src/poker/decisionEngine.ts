@@ -31,7 +31,7 @@ export function calculateDecision(
 
   const { requiredEquity } = calculatePotOdds(pot, amountToCall);
 
-  if (drawAnalysis.hasMadeHand && outsResult.count < 3) {
+  if (drawAnalysis.hasMadeHand && drawAnalysis.draws.length === 0) {
     return {
       signal: "RANGE_REQUIRED",
       requiredEquity,
