@@ -95,6 +95,17 @@ describe("missing position context returns NEUTRAL/LOW", () => {
     const r = getRiverStrategy(partialContext, board, 5);
     expect(r.confidence).toBe("LOW");
     expect(r.style).toBe("INSUFFICIENT_CONTEXT");
+    expect(r.explanation).toBe("Insufficient position context for a reliable river recommendation.");
+  });
+
+  it("getRiverStrategy uses low SPR for overbet candidates when nut and range advantage align", () => {
+    const board = analyzeBoardTexture([
+      { rank: "A", suit: "c" }, { rank: "7", suit: "d" }, { rank: "2", suit: "s" }
+    ]);
+    const r = getRiverStrategy(btnVsBb, board, 1.5);
+    expect(r.style).toBe("OVERBET_CANDIDATE");
+    expect(r.suggestedBetSizes).toEqual([1.0, 1.5, 2.0]);
+    expect(r.explanation).toBe("Low SPR with nut and range advantage — strong overbet candidate on the river.");
   });
 });
 

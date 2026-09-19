@@ -26,7 +26,11 @@ export function getRiverStrategy(
     sizes = [0.5, 0.75];
     explanation = context.numPlayers > 2
       ? "Multiway pot — bet less frequently with a stronger range than heads-up."
-      : "Insufficient position context for a reliable turn/river recommendation.";
+      : "Insufficient position context for a reliable river recommendation.";
+  } else if (nutAdvantage === "HERO" && rangeAdvantage === "HERO" && spr < 2) {
+    style = "OVERBET_CANDIDATE";
+    sizes = [1.0, 1.5, 2.0];
+    explanation = "Low SPR with nut and range advantage — strong overbet candidate on the river.";
   } else if (nutAdvantage === "HERO" && rangeAdvantage === "HERO") {
     style = "OVERBET_CANDIDATE";
     sizes = [1.0, 1.5, 2.0];

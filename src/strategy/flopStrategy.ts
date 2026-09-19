@@ -15,7 +15,7 @@ function getConfidence(context: PreFlopContext, board: BoardAnalysis): StrategyC
 export function getFlopStrategy(
   context: PreFlopContext,
   board: BoardAnalysis,
-  spr: number,
+  _spr: number,
 ): StrategyResult {
   const confidence = getConfidence(context, board);
   const rangeAdvantage = estimateRangeAdvantage(context, board);
