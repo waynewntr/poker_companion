@@ -35,3 +35,10 @@ export function cardLabel(c: Card): string {
 export function cardsEqual(a: Card, b: Card): boolean {
   return a.rank === b.rank && a.suit === b.suit;
 }
+
+export const SUIT_TEXT_CLASS_MAP: Record<Suit, string> = {
+  s: "text-white",
+  h: "text-red-400",
+  d: "text-red-400",
+  c: "text-white",
+};
