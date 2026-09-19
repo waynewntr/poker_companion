@@ -1,6 +1,7 @@
 "use client";
 
 import type { DecisionResult as DecisionResultType } from "@/poker/decisionEngine";
+import { formatMoney } from "@/components/MoneyInput";
 
 const SIGNAL_CONFIG = {
   CALL: { emoji: "🟢", label: "CALL", class: "text-green-500" },
@@ -15,7 +16,7 @@ function pct(v: number | undefined) {
 }
 
 function marginSign(m: number) {
-  return m >= 0 ? `+${(m * 100).toFixed(1)}%` : `${(m * 100).toFixed(1)}%`;
+  return m > 0 ? `+${(m * 100).toFixed(1)}%` : `${(m * 100).toFixed(1)}%`;
 }
 
 interface Props {
@@ -61,7 +62,7 @@ export default function DecisionResult({ result }: Props) {
         <div className="text-xs text-gray-400 border-t border-[#2A2A35] pt-2 mt-2">
           <span>Additional future winnings required: </span>
           <span className="text-white">
-            R {Math.round(impliedOdds.futureWinningsRequired).toLocaleString("en-ZA")}
+            {formatMoney(Math.round(impliedOdds.futureWinningsRequired))}
           </span>
           {impliedOdds.effectiveStackAvailable !== undefined && (
             <span className={impliedOdds.possible ? " text-green-400" : " text-red-400"}>
