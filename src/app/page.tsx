@@ -121,7 +121,7 @@ export default function Home() {
   const rangeThreat: RangeThreat | null = useMemo(() => {
     if (
       !villainArchetype || !villainPosition ||
-      heroCards.length < 2 || board.length < 3 || !currentHand
+      heroCards.length !== 2 || board.length < 3 || !currentHand
     ) {
       return null;
     }
