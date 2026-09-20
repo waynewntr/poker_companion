@@ -95,6 +95,47 @@ describe("analyzeVillainRange", () => {
     expect(result.equityDenialFraction).toBeLessThanOrEqual(2);
   });
 
+  it("drawDescriptions includes caution when > 20% of range is already ahead", () => {
+    const heroCards = [
+      { rank: "2" as const, suit: "s" as const },
+      { rank: "2" as const, suit: "h" as const },
+    ];
+    const board = [
+      { rank: "A" as const, suit: "c" as const },
+      { rank: "K" as const, suit: "d" as const },
+      { rank: "Q" as const, suit: "h" as const },
+    ];
+    const heroResult = evaluateBestHand(heroCards, board);
+    const blocked = [...heroCards, ...board];
+    const combos = getVillainCombos("maniac", "BTN", blocked);
+
+    const result = analyzeVillainRange(combos, heroCards, board, heroResult, "maniac", "BTN");
+
+    if (result.beatHeroPct > 0.2) {
+      expect(result.drawDescriptions.some(description => description.toLowerCase().includes("caution"))).toBe(true);
+    }
+  });
+
+  it("counts a flush draw threat when villain can make a higher flush than hero", () => {
+    const heroCards = [
+      { rank: "J" as const, suit: "h" as const },
+      { rank: "8" as const, suit: "h" as const },
+    ];
+    const board = [
+      { rank: "Q" as const, suit: "h" as const },
+      { rank: "9" as const, suit: "h" as const },
+      { rank: "2" as const, suit: "h" as const },
+    ];
+    const heroResult = evaluateBestHand(heroCards, board);
+    const blocked = [...heroCards, ...board];
+    const combos = getVillainCombos("maniac", "BTN", blocked);
+
+    const result = analyzeVillainRange(combos, heroCards, board, heroResult, "maniac", "BTN");
+
+    expect(result.drawingToWinCount).toBeGreaterThan(0);
+    expect(result.drawDescriptions.some(description => description.startsWith("Flush draw:"))).toBe(true);
+  });
+
   it("empty combos returns equityDenialFraction of 0.25", () => {
     const heroCards = [{ rank: "A" as const, suit: "s" as const }, { rank: "K" as const, suit: "h" as const }];
     const board = [{ rank: "A" as const, suit: "h" as const }, { rank: "K" as const, suit: "d" as const }, { rank: "2" as const, suit: "c" as const }];

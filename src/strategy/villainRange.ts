@@ -30,6 +30,36 @@ const CATEGORY_RANK: Record<HandCategory, number> = {
   straight_flush: 8,
 };
 
+const RANK_VALUES_MAP: Record<string, number> = {
+  "2": 2,
+  "3": 3,
+  "4": 4,
+  "5": 5,
+  "6": 6,
+  "7": 7,
+  "8": 8,
+  "9": 9,
+  T: 10,
+  J: 11,
+  Q: 12,
+  K: 13,
+  A: 14,
+};
+
+function getHighestRankInSuit(cards: Card[], suit: Card["suit"]): number {
+  const ranks = cards.filter(card => card.suit === suit).map(card => RANK_VALUES_MAP[card.rank] ?? 0);
+  return ranks.length > 0 ? Math.max(...ranks) : 0;
+}
+
+function getFourCardFlushSuit(cards: Card[]): Card["suit"] | undefined {
+  const suitCounts: Record<Card["suit"], number> = { s: 0, h: 0, d: 0, c: 0 };
+  for (const card of cards) {
+    suitCounts[card.suit] += 1;
+  }
+
+  return (Object.entries(suitCounts) as [Card["suit"], number][]).find(([, count]) => count === 4)?.[0];
+}
+
 function createZeroThreat(archetype: ArchetypeKey, villainPosition: Position): RangeThreat {
   return {
     archetype,
@@ -68,8 +98,6 @@ export function analyzeVillainRange(
     return createZeroThreat(archetype, villainPosition);
   }
 
-  void heroCards;
-
   const totalCombos = combos.length;
   const drawCounts = new Map<string, number>();
 
@@ -90,7 +118,26 @@ export function analyzeVillainRange(
     for (const drawLabel of analysis.draws) {
       const drawType = drawTypeFromLabel(drawLabel);
       if (!drawType) continue;
-      if (!qualifiesAsDrawToBeatHero(drawType, heroResult.category)) continue;
+
+      let countsAsThreat = false;
+
+      if (drawType === "flush" && heroResult.category === "flush") {
+        const villainCards = [combo[0], combo[1], ...board];
+        const flushSuit = getFourCardFlushSuit(villainCards);
+        if (flushSuit) {
+          const villainHigh = getHighestRankInSuit(villainCards, flushSuit);
+          const heroHigh = getHighestRankInSuit([...heroCards, ...board], flushSuit);
+          if (villainHigh > heroHigh) {
+            countsAsThreat = true;
+          }
+        }
+      } else if (drawType === "straight" && heroResult.category === "straight") {
+        countsAsThreat = true;
+      } else if (qualifiesAsDrawToBeatHero(drawType, heroResult.category)) {
+        countsAsThreat = true;
+      }
+
+      if (!countsAsThreat) continue;
 
       comboHasQualifyingDraw = true;
       const normalizedLabel = drawType === "flush" ? "Flush draw" : "Straight draw";
@@ -108,6 +155,10 @@ export function analyzeVillainRange(
   const drawDescriptions = Array.from(drawCounts.entries())
     .sort(([left], [right]) => left.localeCompare(right))
     .map(([label, count]) => `${label}: ${count} combo${count === 1 ? "" : "s"}`);
+
+  if (beatHeroPct > 0.2) {
+    drawDescriptions.push(`Caution: ${(beatHeroPct * 100).toFixed(0)}% of range already ahead`);
+  }
 
   let equityDenialFraction = 0.25;
   let threatLevel: RangeThreat["threatLevel"] = "LOW";
