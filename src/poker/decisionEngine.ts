@@ -1,5 +1,6 @@
 import { PokerHand } from "../domain/hand";
 import { DrawAnalysis } from "./draws";
+import { evaluateBestHand, HandCategory } from "./evaluator";
 import { OutsResult } from "./outs";
 import { calculatePotOdds } from "./potOdds";
 import { calculateImpliedOdds, ImpliedOddsResult } from "./impliedOdds";
@@ -16,7 +17,15 @@ export interface DecisionResult {
   impliedOdds?: ImpliedOddsResult;
 }
 
-const MARGIN_THRESHOLD = 0.02;
+// Hands weak enough that equity vs opponent is genuinely uncertain
+const RANGE_REQUIRED_CATEGORIES: HandCategory[] = [
+  "pair", "two_pair", "three_of_a_kind", "straight",
+];
+
+// Hands strong enough that calling is almost always correct
+const STRONG_MADE_CATEGORIES: HandCategory[] = [
+  "flush", "full_house", "four_of_a_kind", "straight_flush",
+];
 
 export function calculateDecision(
   hand: PokerHand,
@@ -31,12 +40,26 @@ export function calculateDecision(
 
   const { requiredEquity } = calculatePotOdds(pot, amountToCall);
 
-  if (drawAnalysis.hasMadeHand && drawAnalysis.draws.length === 0) {
-    return {
-      signal: "RANGE_REQUIRED",
-      requiredEquity,
-      reason: "Made hand — opponent range required for reliable equity calculation.",
-    };
+const MARGIN_THRESHOLD = 0.02;
+
+  if (drawAnalysis.hasMadeHand && drawAnalysis.draws.length === 0 && hand.heroCards.length > 0 && hand.board.length >= 3) {
+    const { category } = evaluateBestHand(hand.heroCards, hand.board);
+
+    if (STRONG_MADE_CATEGORIES.includes(category)) {
+      return {
+        signal: "CALL",
+        requiredEquity,
+        reason: "Strong made hand — consider raising. Opponent range required for exact equity.",
+      };
+    }
+
+    if (RANGE_REQUIRED_CATEGORIES.includes(category)) {
+      return {
+        signal: "RANGE_REQUIRED",
+        requiredEquity,
+        reason: "Made hand — opponent range required for reliable equity calculation.",
+      };
+    }
   }
 
   let comparisonProbability: number;
@@ -44,7 +67,7 @@ export function calculateDecision(
     comparisonProbability = enumeratedRunoutProbability(hand.heroCards, hand.board);
   } else {
     comparisonProbability = nextCardProbability(
-      outsResult.count,
+      outsResult.drawOuts.length,
       street === "flop" ? "flop" : "turn"
     );
   }

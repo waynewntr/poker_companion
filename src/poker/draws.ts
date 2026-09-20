@@ -32,8 +32,13 @@ export function detectDraws(heroCards: Card[], board: Card[]): DrawAnalysis {
   const hasMadeHand = MADE_HAND_CATEGORIES.includes(current.category);
   const draws: string[] = [];
 
-  // Flush draw: exactly 4 cards of the same suit, hero contributes, not already a flush
-  if (current.category !== "flush" && current.category !== "straight_flush") {
+  // Only show flush draw when a flush would actually improve the current hand
+  if (
+    current.category !== "flush" &&
+    current.category !== "full_house" &&
+    current.category !== "four_of_a_kind" &&
+    current.category !== "straight_flush"
+  ) {
     const suitGroups: Record<Suit, Card[]> = { s: [], h: [], d: [], c: [] };
     for (const c of all) suitGroups[c.suit].push(c);
 
@@ -47,8 +52,14 @@ export function detectDraws(heroCards: Card[], board: Card[]): DrawAnalysis {
     }
   }
 
-  // Straight draws: scan all possible straights for 4-card combinations
-  if (current.category !== "straight" && current.category !== "straight_flush") {
+  // Only show straight draws when a straight would actually improve the current hand
+  if (
+    current.category !== "straight" &&
+    current.category !== "flush" &&
+    current.category !== "full_house" &&
+    current.category !== "four_of_a_kind" &&
+    current.category !== "straight_flush"
+  ) {
     const allRankVals = new Set(all.map(c => RANK_VALUES[c.rank]));
     const heroRankVals = new Set(heroCards.map(c => RANK_VALUES[c.rank]));
     let oesd = 0;

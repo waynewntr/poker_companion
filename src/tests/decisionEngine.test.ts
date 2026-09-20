@@ -24,6 +24,7 @@ const flushDrawAnalysis: DrawAnalysis = { draws: ["Nut flush draw"], hasMadeHand
 const nineOuts: OutsResult = {
   outs: Array(9).fill({ rank: "2", suit: "s" }),
   count: 9,
+  drawOuts: Array(9).fill({ rank: "2", suit: "s" }),
   labels: [],
 };
 
@@ -36,21 +37,39 @@ describe("calculateDecision", () => {
 
   it("returns FOLD when draw probability is below required equity by ≥ 2pp", () => {
     // 2 outs / 47 = 4.3% vs required 16.7% → -12.4%
-    const twoOuts: OutsResult = { outs: Array(2).fill({ rank: "2", suit: "s" }), count: 2, labels: [] };
+    const twoOuts: OutsResult = { outs: Array(2).fill({ rank: "2", suit: "s" }), count: 2, drawOuts: Array(2).fill({ rank: "2", suit: "s" }), labels: [] };
     const r = calculateDecision(baseHand, { draws: [], hasMadeHand: false }, twoOuts);
     expect(r.signal).toBe("FOLD");
     expect(r.margin).toBeLessThan(-0.02);
   });
 
-  it("returns RANGE_REQUIRED for made hand with < 3 outs", () => {
-    const twoOuts: OutsResult = { outs: Array(2).fill({ rank: "2", suit: "s" }), count: 2, labels: [] };
-    const r = calculateDecision(baseHand, { draws: [], hasMadeHand: true }, twoOuts);
+  it("returns RANGE_REQUIRED for a made pair with no draws", () => {
+    // A♠K♠ on A♥8♣4♦ — top pair, no draws → RANGE_REQUIRED
+    const pairHand: PokerHand = {
+      ...baseHand,
+      heroCards: [{ rank: "A", suit: "s" }, { rank: "K", suit: "s" }],
+      board: [{ rank: "A", suit: "h" }, { rank: "8", suit: "c" }, { rank: "4", suit: "d" }],
+    };
+    const noOuts: OutsResult = { outs: [], count: 0, drawOuts: [], labels: [] };
+    const r = calculateDecision(pairHand, { draws: [], hasMadeHand: true }, noOuts);
     expect(r.signal).toBe("RANGE_REQUIRED");
+  });
+
+  it("returns CALL for a strong made hand (flush) with no draws", () => {
+    // A♥K♥ on Q♥J♥2♥ — nut flush → CALL
+    const flushHand: PokerHand = {
+      ...baseHand,
+      heroCards: [{ rank: "A", suit: "h" }, { rank: "K", suit: "h" }],
+      board: [{ rank: "Q", suit: "h" }, { rank: "J", suit: "h" }, { rank: "2", suit: "h" }],
+    };
+    const noOuts: OutsResult = { outs: [], count: 0, drawOuts: [], labels: [] };
+    const r = calculateDecision(flushHand, { draws: [], hasMadeHand: true }, noOuts);
+    expect(r.signal).toBe("CALL");
   });
 
   it("returns CLOSE when margin is within ±2pp", () => {
     // 8 outs / 47 = 17.0% vs required 16.7% → margin +0.3%
-    const eightOuts: OutsResult = { outs: Array(8).fill({ rank: "2", suit: "s" }), count: 8, labels: [] };
+    const eightOuts: OutsResult = { outs: Array(8).fill({ rank: "2", suit: "s" }), count: 8, drawOuts: Array(8).fill({ rank: "2", suit: "s" }), labels: [] };
     const r = calculateDecision(baseHand, { draws: ["OESD"], hasMadeHand: false }, eightOuts);
     expect(r.signal).toBe("CLOSE");
     expect(Math.abs(r.margin!)).toBeLessThan(0.02);
@@ -66,7 +85,7 @@ describe("calculateDecision", () => {
 
   it("returns CALL with zero call amount (free check)", () => {
     const freeCheck: PokerHand = { ...baseHand, amountToCall: 0 };
-    const r = calculateDecision(freeCheck, { draws: [], hasMadeHand: false }, { outs: [], count: 0, labels: [] });
+    const r = calculateDecision(freeCheck, { draws: [], hasMadeHand: false }, { outs: [], count: 0, drawOuts: [], labels: [] });
     expect(r.signal).toBe("CALL");
     expect(r.requiredEquity).toBe(0);
   });
