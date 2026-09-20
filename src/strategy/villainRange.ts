@@ -40,7 +40,7 @@ function createZeroThreat(archetype: ArchetypeKey, villainPosition: Position): R
     drawingToWinCount: 0,
     drawingToWinPct: 0,
     drawDescriptions: [],
-    equityDenialFraction: 0,
+    equityDenialFraction: 0.25,
     threatLevel: "LOW",
   };
 }

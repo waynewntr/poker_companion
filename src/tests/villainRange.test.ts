@@ -94,4 +94,13 @@ describe("analyzeVillainRange", () => {
     expect(result.equityDenialFraction).toBeGreaterThanOrEqual(0.25);
     expect(result.equityDenialFraction).toBeLessThanOrEqual(2);
   });
+
+  it("empty combos returns equityDenialFraction of 0.25", () => {
+    const heroCards = [{ rank: "A" as const, suit: "s" as const }, { rank: "K" as const, suit: "h" as const }];
+    const board = [{ rank: "A" as const, suit: "h" as const }, { rank: "K" as const, suit: "d" as const }, { rank: "2" as const, suit: "c" as const }];
+    const heroResult = evaluateBestHand(heroCards, board);
+    const result = analyzeVillainRange([], heroCards, board, heroResult, "nit", "UTG");
+    expect(result.equityDenialFraction).toBe(0.25);
+    expect(result.threatLevel).toBe("LOW");
+  });
 });
