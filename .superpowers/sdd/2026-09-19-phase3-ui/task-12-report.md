@@ -2,3 +2,8 @@ Status: DONE_WITH_CONCERNS
 Commits: 3339dc5, b3cc5c3
 Tests: npx tsc --noEmit PASS; npm run dev served http://localhost:3000 PASS; browser smoke test shell PASS; Test C PASS; Test D PASS; Test A FAIL (live app showed Draw probability 100.0% and 47 unique outs instead of ~19.1% and 9 outs); Test B FAIL (live app showed CALL with Draw probability 83.0% and 39 unique outs instead of RANGE REQUIRED)
 Concerns: Acceptance failures A and B come from existing poker math behavior surfaced by the new page wiring, not from the layout itself. In the live app, calculateOuts and calculateDecision currently treat many non-draw improvements as outs, which inflates probabilities and prevents the expected RANGE_REQUIRED branch for made hands.
+
+Status: DONE
+Commits: 241bf3b
+Tests: npx vitest run src/tests/decisionEngine.test.ts PASS; npx vitest run PASS; smoke Test B PASS (A♠K♠ | A♥8♣4♦, Pot=800, Call=200 showed ⚪ RANGE REQUIRED)
+Concerns: None

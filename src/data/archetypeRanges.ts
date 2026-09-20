@@ -1,5 +1,5 @@
 import type { Card } from "@/domain/cards";
-import { cardKey } from "@/domain/cards";
+import { cardKey, RANK_VALUES } from "@/domain/cards";
 import type { Position } from "@/domain/hand";
 
 export type ArchetypeKey =
@@ -2520,4 +2520,26 @@ export function getVillainCombos(
     }
   }
   return result;
+}
+
+// Convert two hole cards to hand-type notation: A♠K♥ → "AKo", A♠K♠ → "AKs", A♠A♥ → "AA"
+export function handToType(c1: Card, c2: Card): string {
+  const r1 = RANK_VALUES[c1.rank];
+  const r2 = RANK_VALUES[c2.rank];
+  const [high, low] = r1 >= r2 ? [c1, c2] : [c2, c1];
+  if (high.rank === low.rank) return `${high.rank}${low.rank}`;
+  return `${high.rank}${low.rank}${high.suit === low.suit ? "s" : "o"}`;
+}
+
+// True when the hand is in the archetype's opening range for that position
+export function isHandInRange(
+  archetype: ArchetypeKey,
+  position: Position,
+  c1: Card,
+  c2: Card
+): boolean {
+  if (position === "BB") return false;
+  const hands = RANGES[archetype]?.[position];
+  if (!hands) return false;
+  return hands.includes(handToType(c1, c2));
 }

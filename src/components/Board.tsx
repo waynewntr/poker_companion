@@ -34,7 +34,7 @@ function CardSlot({ card, slot, active }: { card: Card | null; slot: SlotName; a
       {card ? (
         <>
           <span>{card.rank}</span>
-          <span className="text-xs">{SUIT_SYMBOLS[card.suit]}</span>
+          <span className="text-xl leading-none">{SUIT_SYMBOLS[card.suit]}</span>
         </>
       ) : (
         <span className="text-gray-600 text-lg">?</span>

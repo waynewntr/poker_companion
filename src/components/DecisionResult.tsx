@@ -24,9 +24,10 @@ interface Props {
   currentHand?: string;
   pot: number;
   amountToCall: number;
+  equityLabel?: string;
 }
 
-export default function DecisionResult({ result, currentHand, pot, amountToCall }: Props) {
+export default function DecisionResult({ result, currentHand, pot, amountToCall, equityLabel = "Draw probability" }: Props) {
   const { signal, requiredEquity, comparisonProbability, margin, reason, impliedOdds } = result;
   const cfg = SIGNAL_CONFIG[signal];
 
@@ -59,7 +60,7 @@ export default function DecisionResult({ result, currentHand, pot, amountToCall 
 
         {comparisonProbability !== undefined && (
           <>
-            <span className="text-gray-500">Draw probability</span>
+            <span className="text-gray-500">{equityLabel}</span>
             <span className="text-white text-right">{pct(comparisonProbability)}</span>
           </>
         )}

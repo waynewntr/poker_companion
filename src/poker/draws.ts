@@ -30,6 +30,10 @@ export function detectDraws(heroCards: Card[], board: Card[]): DrawAnalysis {
   const all = [...heroCards, ...board];
   const current = evaluateBestHand(heroCards, board);
   const hasMadeHand = MADE_HAND_CATEGORIES.includes(current.category);
+
+  // River: no more cards can come, so no draws exist — made hands go to RANGE_REQUIRED
+  if (board.length >= 5) return { draws: [], hasMadeHand };
+
   const draws: string[] = [];
 
   // Only show flush draw when a flush would actually improve the current hand
