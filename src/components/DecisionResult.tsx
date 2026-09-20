@@ -21,11 +21,17 @@ function marginSign(m: number) {
 
 interface Props {
   result: DecisionResultType;
+  currentHand?: string;
+  pot: number;
+  amountToCall: number;
 }
 
-export default function DecisionResult({ result }: Props) {
+export default function DecisionResult({ result, currentHand, pot, amountToCall }: Props) {
   const { signal, requiredEquity, comparisonProbability, margin, reason, impliedOdds } = result;
   const cfg = SIGNAL_CONFIG[signal];
+
+  // Format plain numbers for the formula (no currency symbol needed in maths)
+  const fmtN = (v: number) => v.toLocaleString("en-ZA");
 
   return (
     <div className="space-y-3">
@@ -33,9 +39,23 @@ export default function DecisionResult({ result }: Props) {
         {cfg.emoji} {cfg.label}
       </div>
 
+      {/* Current hand sits directly below the signal */}
+      {currentHand && (
+        <p className="text-xs text-gray-400">
+          Hand: <span className="font-semibold text-gray-200">{currentHand}</span>
+        </p>
+      )}
+
       <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
         <span className="text-gray-500">Required equity</span>
         <span className="text-white text-right">{pct(requiredEquity)}</span>
+
+        {/* Maths formula sits under required equity, spanning full width */}
+        {amountToCall > 0 && (
+          <span className="col-span-2 text-[11px] text-gray-600 font-mono pb-1">
+            {fmtN(amountToCall)} / ({fmtN(pot)} + {fmtN(amountToCall)} + {fmtN(amountToCall)}) = {pct(requiredEquity)}
+          </span>
+        )}
 
         {comparisonProbability !== undefined && (
           <>
@@ -54,7 +74,7 @@ export default function DecisionResult({ result }: Props) {
         )}
       </div>
 
-      {signal === "RANGE_REQUIRED" && (
+      {(signal === "RANGE_REQUIRED" || signal === "CALL" && !comparisonProbability) && (
         <p className="text-xs text-gray-500 italic">{reason}</p>
       )}
 

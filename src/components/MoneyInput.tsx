@@ -6,16 +6,36 @@ interface MoneyInputProps {
   label: string;
   value: number;
   onChange: (v: number) => void;
+  stacked?: boolean; // label above input instead of inline, for side-by-side layouts
 }
 
 export function formatMoney(v: number): string {
   return `R ${v.toLocaleString("en-ZA")}`;
 }
 
-export default function MoneyInput({ label, value, onChange }: MoneyInputProps) {
+export default function MoneyInput({ label, value, onChange, stacked }: MoneyInputProps) {
   function handleChange(e: ChangeEvent<HTMLInputElement>) {
     const raw = e.target.value.replace(/\D/g, "");
     onChange(raw === "" ? 0 : parseInt(raw, 10));
+  }
+
+  if (stacked) {
+    return (
+      <div className="flex flex-col gap-1">
+        <span className="text-[11px] text-gray-400 uppercase tracking-widest">{label}</span>
+        <div className="flex items-center rounded border border-[#2A2A35] bg-[#1A1A1F] px-3 py-2 gap-1">
+          <span className="text-gray-400 text-sm">R</span>
+          <input
+            type="text"
+            inputMode="numeric"
+            value={value === 0 ? "" : value.toLocaleString("en-ZA")}
+            onChange={handleChange}
+            placeholder="0"
+            className="min-w-0 flex-1 bg-transparent text-white text-sm outline-none"
+          />
+        </div>
+      </div>
+    );
   }
 
   return (
