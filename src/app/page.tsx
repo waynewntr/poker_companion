@@ -7,9 +7,12 @@ import BetSizeButtons from "@/components/BetSizeButtons";
 import CardPicker from "@/components/CardPicker";
 import DecisionResultPanel from "@/components/DecisionResult";
 import DrawSummary from "@/components/DrawSummary";
+import GameContext from "@/components/GameContext";
 import MoneyInput from "@/components/MoneyInput";
+import RangeThreatPanel from "@/components/RangeThreat";
 import StackSummary from "@/components/StackSummary";
 import StrategyPanel from "@/components/StrategyPanel";
+import { getVillainCombos } from "@/data/archetypeRanges";
 import { calculateDecision } from "@/poker/decisionEngine";
 import { detectDraws } from "@/poker/draws";
 import { evaluateBestHand } from "@/poker/evaluator";
@@ -27,6 +30,7 @@ import { analyzeBoardTexture } from "@/strategy/boardTexture";
 import { getFlopStrategy } from "@/strategy/flopStrategy";
 import { getRiverStrategy } from "@/strategy/riverStrategy";
 import { getTurnStrategy } from "@/strategy/turnStrategy";
+import { analyzeVillainRange, type RangeThreat } from "@/strategy/villainRange";
 
 const ALL_SLOTS: SlotName[] = ["hero1", "hero2", "flop1", "flop2", "flop3", "turn", "river"];
 
@@ -40,6 +44,7 @@ export default function Home() {
   const gameMode = useHandStore((state) => state.gameMode);
   const heroPosition = useHandStore((state) => state.heroPosition);
   const villainPosition = useHandStore((state) => state.villainPosition);
+  const villainArchetype = useHandStore((state) => state.villainArchetype);
   const preflopAggressor = useHandStore((state) => state.preflopAggressor);
   const potType = useHandStore((state) => state.potType);
   const numPlayers = useHandStore((state) => state.numPlayers);
@@ -112,6 +117,27 @@ export default function Home() {
       strategyResult: strategy,
     };
   }, [heroCards, board, hand, preflopContext, amountToCall, street, spr]);
+
+  const rangeThreat: RangeThreat | null = useMemo(() => {
+    if (
+      !villainArchetype || !villainPosition ||
+      heroCards.length < 2 || board.length < 3 || !currentHand
+    ) {
+      return null;
+    }
+
+    const blocked = [...heroCards, ...board];
+    const combos = getVillainCombos(villainArchetype, villainPosition, blocked);
+
+    return analyzeVillainRange(
+      combos,
+      heroCards,
+      board,
+      currentHand,
+      villainArchetype,
+      villainPosition,
+    );
+  }, [villainArchetype, villainPosition, heroCards, board, currentHand]);
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-6">
@@ -213,6 +239,8 @@ export default function Home() {
             </div>
           </section>
 
+          <GameContext />
+
           {/* Your hand + board */}
           <section className="rounded-lg border border-[#2A2A35] bg-[#1A1A1F] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
             <Board />
@@ -255,6 +283,12 @@ export default function Home() {
               {strategyResult && (
                 <section className="rounded-lg border border-[#2A2A35] bg-[#1A1A1F] p-4">
                   <StrategyPanel strategy={strategyResult} pot={pot} />
+                </section>
+              )}
+
+              {rangeThreat && (
+                <section className="rounded-lg border border-[#2A2A35] bg-[#1A1A1F] p-4">
+                  <RangeThreatPanel threat={rangeThreat} pot={pot} />
                 </section>
               )}
             </>
