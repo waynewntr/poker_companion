@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { Card, cardKey } from "@/domain/cards";
+import type { ArchetypeKey } from "@/data/archetypeRanges";
 import { GameMode, Street, Position, PotType } from "@/domain/hand";
 
 export type SlotName =
@@ -28,6 +29,7 @@ export interface HandStore {
   // Strategy context
   heroPosition: Position | undefined;
   villainPosition: Position | undefined;
+  villainArchetype: ArchetypeKey | undefined;
   preflopAggressor: "hero" | "villain" | undefined;
   potType: PotType | undefined;
   numPlayers: number;
@@ -47,6 +49,7 @@ export interface HandStore {
   setGameMode: (mode: GameMode) => void;
   setHeroPosition: (p: Position | undefined) => void;
   setVillainPosition: (p: Position | undefined) => void;
+  setVillainArchetype: (a: ArchetypeKey | undefined) => void;
   setPreflopAggressor: (a: "hero" | "villain" | undefined) => void;
   setPotType: (t: PotType | undefined) => void;
   setNumPlayers: (n: number) => void;
@@ -69,6 +72,7 @@ export const useHandStore = create<HandStore>((set, get) => ({
   gameMode: "cash",
   heroPosition: undefined,
   villainPosition: undefined,
+  villainArchetype: undefined,
   preflopAggressor: undefined,
   potType: undefined,
   numPlayers: 2,
@@ -115,12 +119,13 @@ export const useHandStore = create<HandStore>((set, get) => ({
   setGameMode: (mode) => set({ gameMode: mode }),
   setHeroPosition: (p) => set({ heroPosition: p }),
   setVillainPosition: (p) => set({ villainPosition: p }),
+  setVillainArchetype: (a) => set({ villainArchetype: a }),
   setPreflopAggressor: (a) => set({ preflopAggressor: a }),
   setPotType: (t) => set({ potType: t }),
   setNumPlayers: (n) => set({ numPlayers: n }),
 
   newHand: () => {
-    const { gameMode, heroStack, villainStack, heroPosition, villainPosition, preflopAggressor, potType, numPlayers } = get();
+    const { gameMode, heroStack, villainStack, heroPosition, villainPosition, villainArchetype, preflopAggressor, potType, numPlayers } = get();
     set({
       slots: { ...EMPTY_SLOTS },
       pot: 0,
@@ -133,6 +138,7 @@ export const useHandStore = create<HandStore>((set, get) => ({
       villainStack,
       heroPosition,
       villainPosition,
+      villainArchetype,
       preflopAggressor,
       potType,
       numPlayers,
