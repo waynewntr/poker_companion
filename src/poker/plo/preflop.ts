@@ -65,6 +65,7 @@ export function ratePloHand(cards: Card[]): PLOHandRating {
     .sort((a, b) => b - a);
   const topPairRank = pairRanks[0];
   const secondPairRank = pairRanks[1];
+  const uniqueRanks = [...new Set(ranks)];
 
   const maxRun = longestRun(ranks);
   const isRundown = maxRun >= 4;
@@ -72,32 +73,10 @@ export function ratePloHand(cards: Card[]): PLOHandRating {
   const connectedAce = hasAce && isSemiRundown;
 
   if (topPairRank === 14) {
-    if (doubleSuited && (secondPairRank ?? 0) >= 13) {
+    if (doubleSuited) {
       return {
         rating: "Premium",
-        label: "AAKK double-suited",
-        doubleSuited,
-        singleSuited,
-        hasAce,
-        topPairRank,
-      };
-    }
-
-    if (doubleSuited && isRundown) {
-      return {
-        rating: "Premium",
-        label: "Double-suited rundown with AA",
-        doubleSuited,
-        singleSuited,
-        hasAce,
-        topPairRank,
-      };
-    }
-
-    if ((doubleSuited || singleSuited) && isSemiRundown) {
-      return {
-        rating: "Premium",
-        label: "Aces with coordination",
+        label: "Double-suited Aces",
         doubleSuited,
         singleSuited,
         hasAce,
@@ -137,10 +116,21 @@ export function ratePloHand(cards: Card[]): PLOHandRating {
     };
   }
 
-  if (isRundown && (doubleSuited || singleSuited)) {
+  if (isRundown && doubleSuited) {
     return {
-      rating: doubleSuited ? "Strong" : "Strong",
-      label: doubleSuited ? "Double-suited rundown" : "Single-suited rundown",
+      rating: "Strong",
+      label: "Double-suited rundown",
+      doubleSuited,
+      singleSuited,
+      hasAce,
+      topPairRank,
+    };
+  }
+
+  if (isRundown && singleSuited && uniqueRanks[0] >= 11) {
+    return {
+      rating: "Strong",
+      label: "Single-suited rundown (broadway)",
       doubleSuited,
       singleSuited,
       hasAce,
