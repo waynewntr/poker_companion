@@ -67,7 +67,17 @@ describe("ratePloHand", () => {
       { rank: "K", suit: "s" }, { rank: "Q", suit: "c" }
     ]);
 
-    expect(["Premium", "Strong"]).toContain(r.rating);
+    expect(r.rating).toBe("Strong");
+  });
+
+  it("rates T987 double-suited as Strong (not Premium)", () => {
+    const r = ratePloHand([
+      { rank: "T", suit: "s" }, { rank: "9", suit: "h" },
+      { rank: "8", suit: "s" }, { rank: "7", suit: "h" }
+    ]);
+
+    expect(r.rating).toBe("Strong");
+    expect(r.doubleSuited).toBe(true);
   });
 
   it("hasAce is true when hand contains an Ace", () => {

@@ -64,7 +64,6 @@ export function ratePloHand(cards: Card[]): PLOHandRating {
     .map(([rank]) => Number(rank))
     .sort((a, b) => b - a);
   const topPairRank = pairRanks[0];
-  const secondPairRank = pairRanks[1];
   const uniqueRanks = [...new Set(ranks)];
 
   const maxRun = longestRun(ranks);
@@ -94,7 +93,7 @@ export function ratePloHand(cards: Card[]): PLOHandRating {
     };
   }
 
-  if (doubleSuited && isRundown) {
+  if (isRundown && doubleSuited && uniqueRanks[0] >= 12) {
     return {
       rating: "Premium",
       label: "Double-suited rundown",
