@@ -14,6 +14,7 @@ interface FakeState {
   villainStack: number | undefined;
   isAllIn: boolean;
   gameMode: GameMode;
+  gameType: "nlhe" | "plo";
   heroPosition: Position | undefined;
   villainPosition: Position | undefined;
   villainArchetype: ArchetypeKey | undefined;
@@ -27,6 +28,7 @@ interface FakeState {
   setVillainStack: ReturnType<typeof vi.fn>;
   setIsAllIn: ReturnType<typeof vi.fn>;
   setGameMode: ReturnType<typeof vi.fn>;
+  setGameType: ReturnType<typeof vi.fn>;
   newHand: ReturnType<typeof vi.fn>;
 }
 
@@ -49,6 +51,7 @@ const { fakeState } = vi.hoisted(() => ({
     villainStack: undefined,
     isAllIn: false,
     gameMode: "cash",
+    gameType: "nlhe",
     heroPosition: undefined,
     villainPosition: undefined,
     villainArchetype: undefined,
@@ -62,6 +65,7 @@ const { fakeState } = vi.hoisted(() => ({
     setVillainStack: vi.fn(),
     setIsAllIn: vi.fn(),
     setGameMode: vi.fn(),
+    setGameType: vi.fn(),
     newHand: vi.fn(),
   } as FakeState,
 }));
@@ -120,6 +124,7 @@ function resetStore() {
   fakeState.villainStack = undefined;
   fakeState.isAllIn = false;
   fakeState.gameMode = "cash";
+  fakeState.gameType = "nlhe";
   fakeState.heroPosition = undefined;
   fakeState.villainPosition = undefined;
   fakeState.villainArchetype = undefined;
@@ -142,6 +147,36 @@ describe("Home page wiring", () => {
     const html = renderToStaticMarkup(createElement(Home));
 
     expect(html).toContain("Game Context");
+  });
+
+  it("renders a game type toggle and tracks 9 slots in PLO mode", () => {
+    fakeState.gameType = "plo";
+
+    const html = renderToStaticMarkup(createElement(Home));
+
+    expect(html).toContain("Hold&#x27;em");
+    expect(html).toContain("PLO");
+    expect(html).toContain("0/9 cards set");
+  });
+
+  it("shows the PLO preflop panel when 4 hole cards are selected", () => {
+    fakeState.gameType = "plo";
+    fakeState.slots = {
+      hero1: makeCard("A", "s"),
+      hero2: makeCard("A", "h"),
+      hero3: makeCard("K", "s"),
+      hero4: makeCard("Q", "h"),
+      flop1: null,
+      flop2: null,
+      flop3: null,
+      turn: null,
+      river: null,
+    };
+
+    const html = renderToStaticMarkup(createElement(Home));
+
+    expect(html).toContain("Preflop — PLO");
+    expect(html).toContain("Aces");
   });
 
   it("passes the user-entered pot to the range threat panel", () => {

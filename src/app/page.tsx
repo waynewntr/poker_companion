@@ -9,6 +9,8 @@ import DecisionResultPanel from "@/components/DecisionResult";
 import DrawSummary from "@/components/DrawSummary";
 import GameContext from "@/components/GameContext";
 import MoneyInput from "@/components/MoneyInput";
+import PloBoard from "@/components/PloBoard";
+import PloPreflopPanel from "@/components/PloPreflopPanel";
 import RangeThreatPanel from "@/components/RangeThreat";
 import StackSummary from "@/components/StackSummary";
 import StrategyPanel from "@/components/StrategyPanel";
@@ -17,11 +19,14 @@ import { calculateDecision } from "@/poker/decisionEngine";
 import { detectDraws } from "@/poker/draws";
 import { evaluateBestHand } from "@/poker/evaluator";
 import { calculateOuts } from "@/poker/outs";
+import { detectDrawsPLO } from "@/poker/plo/draws";
+import { evaluateBestHandPLO } from "@/poker/plo/evaluator";
+import { calculateOutsPLO } from "@/poker/plo/outs";
 import {
   getBoardCards,
   getCurrentStreet,
   getEffectiveStack,
-  getHeroCards,
+  getHeroCardsForMode,
   getSPR,
   SlotName,
   useHandStore,
@@ -32,7 +37,8 @@ import { getRiverStrategy } from "@/strategy/riverStrategy";
 import { getTurnStrategy } from "@/strategy/turnStrategy";
 import { analyzeVillainRange, type RangeThreat } from "@/strategy/villainRange";
 
-const ALL_SLOTS: SlotName[] = ["hero1", "hero2", "flop1", "flop2", "flop3", "turn", "river"];
+const NLHE_SLOTS: SlotName[] = ["hero1", "hero2", "flop1", "flop2", "flop3", "turn", "river"];
+const PLO_SLOTS: SlotName[] = ["hero1", "hero2", "hero3", "hero4", "flop1", "flop2", "flop3", "turn", "river"];
 
 export default function Home() {
   const slots = useHandStore((state) => state.slots);
@@ -42,6 +48,7 @@ export default function Home() {
   const villainStack = useHandStore((state) => state.villainStack);
   const isAllIn = useHandStore((state) => state.isAllIn);
   const gameMode = useHandStore((state) => state.gameMode);
+  const gameType = useHandStore((state) => state.gameType);
   const heroPosition = useHandStore((state) => state.heroPosition);
   const villainPosition = useHandStore((state) => state.villainPosition);
   const villainArchetype = useHandStore((state) => state.villainArchetype);
@@ -55,18 +62,22 @@ export default function Home() {
   const setVillainStack = useHandStore((state) => state.setVillainStack);
   const setIsAllIn = useHandStore((state) => state.setIsAllIn);
   const setGameMode = useHandStore((state) => state.setGameMode);
+  const setGameType = useHandStore((state) => state.setGameType);
   const newHand = useHandStore((state) => state.newHand);
 
   // Blind amounts persist for the session but are table meta, not hand state
   const [smallBlind, setSmallBlind] = useState(0);
   const [bigBlind, setBigBlind] = useState(0);
 
-  const heroCards = useMemo(() => getHeroCards(slots), [slots]);
+  const requiredHeroCards = gameType === "plo" ? 4 : 2;
+  const visibleSlots = gameType === "plo" ? PLO_SLOTS : NLHE_SLOTS;
+
+  const heroCards = useMemo(() => getHeroCardsForMode(slots, gameType), [slots, gameType]);
   const board = useMemo(() => getBoardCards(slots), [slots]);
   const street = getCurrentStreet(slots);
   const effectiveStack = getEffectiveStack(heroStack, villainStack);
   const spr = getSPR(effectiveStack, pot);
-  const occupiedCount = ALL_SLOTS.filter((slot) => slots[slot] !== null).length;
+  const occupiedCount = visibleSlots.filter((slot) => slots[slot] !== null).length;
 
   const hand = useMemo(
     () => ({
@@ -96,9 +107,19 @@ export default function Home() {
   );
 
   const { outsResult, drawAnalysis, currentHand, decisionResult, strategyResult } = useMemo(() => {
-    const outs = calculateOuts(heroCards, board);
-    const draws = detectDraws(heroCards, board);
-    const current = heroCards.length > 0 ? evaluateBestHand(heroCards, board) : null;
+    const outs = gameType === "plo"
+      ? calculateOutsPLO(heroCards, board)
+      : calculateOuts(heroCards, board);
+    const draws = gameType === "plo"
+      ? detectDrawsPLO(heroCards, board)
+      : detectDraws(heroCards, board);
+    const current = heroCards.length > 0
+      ? gameType === "plo" && board.length >= 3
+        ? evaluateBestHandPLO(heroCards, board)
+        : gameType === "nlhe"
+          ? evaluateBestHand(heroCards, board)
+          : null
+      : null;
     const boardAnalysis = board.length >= 3 ? analyzeBoardTexture(board) : null;
 
     const decision = board.length >= 3 && amountToCall >= 0
@@ -120,12 +141,12 @@ export default function Home() {
       decisionResult: decision,
       strategyResult: strategy,
     };
-  }, [heroCards, board, hand, preflopContext, amountToCall, street, spr]);
+  }, [heroCards, board, hand, preflopContext, amountToCall, street, spr, gameType]);
 
   const rangeThreat: RangeThreat | null = useMemo(() => {
     if (
       !villainArchetype || !villainPosition ||
-      heroCards.length !== 2 || board.length < 3 || !currentHand
+      heroCards.length !== requiredHeroCards || board.length < 3 || !currentHand
     ) {
       return null;
     }
@@ -141,7 +162,7 @@ export default function Home() {
       villainArchetype,
       villainPosition,
     );
-  }, [villainArchetype, villainPosition, heroCards, board, currentHand]);
+  }, [villainArchetype, villainPosition, heroCards, board, currentHand, requiredHeroCards]);
 
   // When RANGE_REQUIRED fires but villain range is loaded, compute equity directly from the range
   const activeDecision = useMemo(() => {
@@ -183,24 +204,42 @@ export default function Home() {
         </div>
 
         <div className="flex items-center justify-between gap-3">
-          <div className="flex overflow-hidden rounded border border-[#2A2A35]">
-            {(["cash", "tournament"] as const).map((mode) => (
-              <button
-                key={mode}
-                onClick={() => setGameMode(mode)}
-                className={[
-                  "px-3 py-1 text-xs font-bold uppercase tracking-widest transition-colors",
-                  gameMode === mode
-                    ? "bg-[#2A2A3F] text-white"
-                    : "bg-[#1A1A1F] text-gray-500 hover:text-gray-300",
-                ].join(" ")}
-              >
-                {mode}
-              </button>
-            ))}
+          <div className="flex items-center gap-3">
+            <div className="flex overflow-hidden rounded border border-[#2A2A35]">
+              {(["nlhe", "plo"] as const).map((type) => (
+                <button
+                  key={type}
+                  onClick={() => setGameType(type)}
+                  className={[
+                    "px-3 py-1 text-xs font-bold uppercase tracking-widest transition-colors",
+                    gameType === type
+                      ? "bg-[#2A2A3F] text-white"
+                      : "bg-[#1A1A1F] text-gray-500 hover:text-gray-300",
+                  ].join(" ")}
+                >
+                  {type === "nlhe" ? "Hold'em" : "PLO"}
+                </button>
+              ))}
+            </div>
+            <div className="flex overflow-hidden rounded border border-[#2A2A35]">
+              {(["cash", "tournament"] as const).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => setGameMode(mode)}
+                  className={[
+                    "px-3 py-1 text-xs font-bold uppercase tracking-widest transition-colors",
+                    gameMode === mode
+                      ? "bg-[#2A2A3F] text-white"
+                      : "bg-[#1A1A1F] text-gray-500 hover:text-gray-300",
+                  ].join(" ")}
+                >
+                  {mode}
+                </button>
+              ))}
+            </div>
           </div>
           <div className="text-right text-[11px] uppercase tracking-widest text-gray-500">
-            <p>{occupiedCount}/7 cards set</p>
+            <p>{occupiedCount}/{visibleSlots.length} cards set</p>
             <p>{street === "preflop" ? "Waiting for flop" : street}</p>
           </div>
         </div>
@@ -252,6 +291,19 @@ export default function Home() {
             </p>
 
             {pot > 0 && <BetSizeButtons pot={pot + amountToCall} onSelect={setAmountToCall} />}
+
+            {gameType === "plo" && amountToCall > 0 && pot > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] uppercase tracking-widest text-gray-500">PLO pot-max</span>
+                <button
+                  onClick={() => setAmountToCall(pot + 3 * amountToCall)}
+                  title="Set call to PLO pot-maximum"
+                  className="rounded border border-amber-800 bg-[#1A1A1F] px-2 py-1 text-[11px] font-bold text-amber-400 transition-colors hover:bg-amber-900/20"
+                >
+                  {`R ${(pot + 3 * amountToCall).toLocaleString("en-ZA")}`}
+                </button>
+              </div>
+            )}
 
             {/* Blind quick-add buttons + All-In toggle on one row */}
             <div className="flex flex-wrap items-center gap-3 pt-1">
@@ -332,7 +384,7 @@ export default function Home() {
 
           {/* Your hand + board */}
           <section className="rounded-lg border border-[#2A2A35] bg-[#1A1A1F] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
-            <Board />
+            {gameType === "plo" ? <PloBoard /> : <Board />}
           </section>
 
           {/* 52-card picker */}
@@ -354,7 +406,7 @@ export default function Home() {
 
         {/* RIGHT COLUMN — decision + strategy results */}
         <div className="flex flex-col gap-4">
-          {heroCards.length === 2 && board.length >= 3 && decisionResult ? (
+          {heroCards.length === requiredHeroCards && board.length >= 3 && decisionResult ? (
             <>
               <section className="space-y-4 rounded-lg border border-[#2A2A35] bg-[#1A1A1F] p-4">
                 <p className="text-xs uppercase tracking-widest text-gray-500">Decision</p>
@@ -382,109 +434,113 @@ export default function Home() {
                 </section>
               )}
             </>
-          ) : heroCards.length === 2 && board.length === 0 ? (
-            /* Preflop suggestion — shown as soon as both hole cards are selected */
-            <section className="space-y-4 rounded-lg border border-[#2A2A35] bg-[#1A1A1F] p-4">
-              <p className="text-xs uppercase tracking-widest text-gray-500">
-                Preflop — Modern Baseline
-              </p>
-              {(() => {
-                const handType = handToType(heroCards[0], heroCards[1]);
-                if (!heroPosition) {
+          ) : heroCards.length === requiredHeroCards && board.length === 0 ? (
+            gameType === "plo" ? (
+              <PloPreflopPanel heroCards={heroCards} />
+            ) : (
+              /* Preflop suggestion — shown as soon as both hole cards are selected */
+              <section className="space-y-4 rounded-lg border border-[#2A2A35] bg-[#1A1A1F] p-4">
+                <p className="text-xs uppercase tracking-widest text-gray-500">
+                  Preflop — Modern Baseline
+                </p>
+                {(() => {
+                  const handType = handToType(heroCards[0], heroCards[1]);
+                  if (!heroPosition) {
+                    return (
+                      <p className="text-sm italic text-gray-500">
+                        Set your position in Game Context to see an opening recommendation.
+                      </p>
+                    );
+                  }
+                  if (heroPosition === "BB") {
+                    return (
+                      <p className="text-sm italic text-gray-500">
+                        BB has no opening range — adjust to blind defence context.
+                      </p>
+                    );
+                  }
+                  const inRange = isHandInRange("gto_oriented_reg", heroPosition, heroCards[0], heroCards[1]);
+                  // Modern Balanced Reg open-raise sizing by position (in BB)
+                  const OPEN_BB: Record<string, number> = { UTG: 2.25, HJ: 2.25, CO: 2.5, BTN: 2.5, SB: 3 };
+                  const multiplier = OPEN_BB[heroPosition] ?? 2.5;
+                  const openAmount = bigBlind > 0 ? Math.round(multiplier * bigBlind / 5) * 5 : null;
+
+                  // 3-bet sizing: IP = 3× facing open, OOP = 4× facing open
+                  const POSTFLOP_RANK: Record<string, number> = { BB: 0, SB: 1, UTG: 2, HJ: 3, CO: 4, BTN: 5 };
+                  const heroRank = POSTFLOP_RANK[heroPosition] ?? 2.5;
+                  const villainRank = villainPosition ? (POSTFLOP_RANK[villainPosition] ?? 2.5) : null;
+                  const isIP = villainRank !== null ? heroRank > villainRank : null;
+                  const raiseMultiplier = isIP === true ? 3 : isIP === false ? 4 : 3.5;
+                  const raiseAmount = amountToCall > 0 ? Math.round(raiseMultiplier * amountToCall / 5) * 5 : null;
+                  const posLabel = isIP === true ? "IP" : isIP === false ? "OOP" : "";
+
                   return (
-                    <p className="text-sm italic text-gray-500">
-                      Set your position in Game Context to see an opening recommendation.
-                    </p>
-                  );
-                }
-                if (heroPosition === "BB") {
-                  return (
-                    <p className="text-sm italic text-gray-500">
-                      BB has no opening range — adjust to blind defence context.
-                    </p>
-                  );
-                }
-                const inRange = isHandInRange("gto_oriented_reg", heroPosition, heroCards[0], heroCards[1]);
-                // Modern Balanced Reg open-raise sizing by position (in BB)
-                const OPEN_BB: Record<string, number> = { UTG: 2.25, HJ: 2.25, CO: 2.5, BTN: 2.5, SB: 3 };
-                const multiplier = OPEN_BB[heroPosition] ?? 2.5;
-                const openAmount = bigBlind > 0 ? Math.round(multiplier * bigBlind / 5) * 5 : null;
-
-                // 3-bet sizing: IP = 3× facing open, OOP = 4× facing open
-                const POSTFLOP_RANK: Record<string, number> = { BB: 0, SB: 1, UTG: 2, HJ: 3, CO: 4, BTN: 5 };
-                const heroRank = POSTFLOP_RANK[heroPosition] ?? 2.5;
-                const villainRank = villainPosition ? (POSTFLOP_RANK[villainPosition] ?? 2.5) : null;
-                const isIP = villainRank !== null ? heroRank > villainRank : null;
-                const raiseMultiplier = isIP === true ? 3 : isIP === false ? 4 : 3.5;
-                const raiseAmount = amountToCall > 0 ? Math.round(raiseMultiplier * amountToCall / 5) * 5 : null;
-                const posLabel = isIP === true ? "IP" : isIP === false ? "OOP" : "";
-
-                return (
-                  <>
-                    <div className={`text-3xl font-black ${inRange ? "text-green-500" : "text-red-500"}`}>
-                      {inRange ? "🟢 OPEN" : "🔴 FOLD"}
-                    </div>
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                      <span className="text-gray-500">Hand</span>
-                      <span className="text-right font-mono text-white">{handType}</span>
-                      <span className="text-gray-500">Position</span>
-                      <span className="text-right text-white">{heroPosition}</span>
-                      <span className="text-gray-500">Baseline</span>
-                      <span className="text-right text-gray-400">Modern Balanced Reg</span>
-                      {inRange && (
-                        <>
-                          <span className="text-gray-500">Suggested open</span>
-                          <span className="flex items-center justify-end gap-2 text-right text-white">
-                            {openAmount !== null
-                              ? `R ${openAmount.toLocaleString("en-ZA")} (${multiplier}×BB)`
-                              : `${multiplier}× BB`}
-                            {openAmount !== null && (
-                              <button
-                                onClick={() => setPot(pot + openAmount)}
-                                title="Add suggested open to pot"
-                                className="rounded border border-[#2A2A35] bg-[#1A1A1F] px-1.5 py-0.5 text-[11px] font-bold text-gray-300 transition-colors hover:bg-[#2A2A3F]"
-                              >
-                                +
-                              </button>
-                            )}
-                          </span>
-
-                          {raiseAmount !== null && (
-                            <>
-                              <span className="text-gray-500">
-                                Suggested raise
-                                {posLabel && <span className="ml-1 text-gray-600">({posLabel})</span>}
-                              </span>
-                              <span className="flex items-center justify-end gap-2 text-right text-white">
-                                {`R ${raiseAmount.toLocaleString("en-ZA")} (${raiseMultiplier}×)`}
+                    <>
+                      <div className={`text-3xl font-black ${inRange ? "text-green-500" : "text-red-500"}`}>
+                        {inRange ? "🟢 OPEN" : "🔴 FOLD"}
+                      </div>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                        <span className="text-gray-500">Hand</span>
+                        <span className="text-right font-mono text-white">{handType}</span>
+                        <span className="text-gray-500">Position</span>
+                        <span className="text-right text-white">{heroPosition}</span>
+                        <span className="text-gray-500">Baseline</span>
+                        <span className="text-right text-gray-400">Modern Balanced Reg</span>
+                        {inRange && (
+                          <>
+                            <span className="text-gray-500">Suggested open</span>
+                            <span className="flex items-center justify-end gap-2 text-right text-white">
+                              {openAmount !== null
+                                ? `R ${openAmount.toLocaleString("en-ZA")} (${multiplier}×BB)`
+                                : `${multiplier}× BB`}
+                              {openAmount !== null && (
                                 <button
-                                  onClick={() => setPot(pot + raiseAmount)}
-                                  title="Add suggested raise to pot"
+                                  onClick={() => setPot(pot + openAmount)}
+                                  title="Add suggested open to pot"
                                   className="rounded border border-[#2A2A35] bg-[#1A1A1F] px-1.5 py-0.5 text-[11px] font-bold text-gray-300 transition-colors hover:bg-[#2A2A3F]"
                                 >
                                   +
                                 </button>
-                              </span>
-                            </>
-                          )}
-                        </>
-                      )}
-                    </div>
-                    <p className="text-[11px] italic text-gray-600">
-                      {inRange
-                        ? `${handType} is in the Modern Balanced Reg open-raise range from ${heroPosition}.`
-                        : `${handType} is outside the Modern Balanced Reg open-raise range from ${heroPosition}.`}
-                    </p>
-                  </>
-                );
-              })()}
-            </section>
+                              )}
+                            </span>
+
+                            {raiseAmount !== null && (
+                              <>
+                                <span className="text-gray-500">
+                                  Suggested raise
+                                  {posLabel && <span className="ml-1 text-gray-600">({posLabel})</span>}
+                                </span>
+                                <span className="flex items-center justify-end gap-2 text-right text-white">
+                                  {`R ${raiseAmount.toLocaleString("en-ZA")} (${raiseMultiplier}×)`}
+                                  <button
+                                    onClick={() => setPot(pot + raiseAmount)}
+                                    title="Add suggested raise to pot"
+                                    className="rounded border border-[#2A2A35] bg-[#1A1A1F] px-1.5 py-0.5 text-[11px] font-bold text-gray-300 transition-colors hover:bg-[#2A2A3F]"
+                                  >
+                                    +
+                                  </button>
+                                </span>
+                              </>
+                            )}
+                          </>
+                        )}
+                      </div>
+                      <p className="text-[11px] italic text-gray-600">
+                        {inRange
+                          ? `${handType} is in the Modern Balanced Reg open-raise range from ${heroPosition}.`
+                          : `${handType} is outside the Modern Balanced Reg open-raise range from ${heroPosition}.`}
+                      </p>
+                    </>
+                  );
+                })()}
+              </section>
+            )
           ) : (
             <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-[#2A2A35] p-10 text-center">
               <p className="text-xs uppercase tracking-widest text-gray-600">Results</p>
               <p className="text-sm text-gray-500">
-                {heroCards.length < 2
-                  ? "Select your 2 hole cards to begin"
+                {heroCards.length < requiredHeroCards
+                  ? `Select your ${requiredHeroCards} hole cards to begin`
                   : "Enter the flop to see the decision"}
               </p>
             </div>
