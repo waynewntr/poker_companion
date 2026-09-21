@@ -122,11 +122,11 @@ export default function Home() {
       : null;
     const boardAnalysis = board.length >= 3 ? analyzeBoardTexture(board) : null;
 
-    const decision = board.length >= 3 && amountToCall >= 0
+    const decision = gameType === "nlhe" && board.length >= 3 && amountToCall >= 0
       ? calculateDecision(hand, draws, outs)
       : null;
 
-    const strategy = boardAnalysis
+    const strategy = gameType === "nlhe" && boardAnalysis
       ? street === "river"
         ? getRiverStrategy(preflopContext, boardAnalysis, spr ?? 0)
         : street === "turn"
@@ -145,6 +145,7 @@ export default function Home() {
 
   const rangeThreat: RangeThreat | null = useMemo(() => {
     if (
+      gameType !== "nlhe" ||
       !villainArchetype || !villainPosition ||
       heroCards.length !== requiredHeroCards || board.length < 3 || !currentHand
     ) {
@@ -193,7 +194,7 @@ export default function Home() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-gray-500">Poker Odds Companion</p>
-            <h1 className="mt-1 text-lg font-black tracking-tight text-white">Local Hold&apos;em HUD</h1>
+            <h1 className="mt-1 text-lg font-black tracking-tight text-white">Local Poker HUD</h1>
           </div>
           <button
             onClick={newHand}

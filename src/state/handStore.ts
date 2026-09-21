@@ -8,10 +8,6 @@ export type SlotName =
   | "flop1" | "flop2" | "flop3"
   | "turn" | "river";
 
-const SLOT_ORDER: SlotName[] = [
-  "hero1", "hero2", "flop1", "flop2", "flop3", "turn", "river",
-];
-
 const NLHE_SLOT_ORDER: SlotName[] = ["hero1", "hero2", "flop1", "flop2", "flop3", "turn", "river"];
 const PLO_SLOT_ORDER: SlotName[] = ["hero1", "hero2", "hero3", "hero4", "flop1", "flop2", "flop3", "turn", "river"];
 
