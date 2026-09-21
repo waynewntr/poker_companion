@@ -35,6 +35,8 @@ const { fakeState } = vi.hoisted(() => ({
     slots: {
       hero1: null,
       hero2: null,
+      hero3: null,
+      hero4: null,
       flop1: null,
       flop2: null,
       flop3: null,
@@ -104,6 +106,8 @@ function resetStore() {
   fakeState.slots = {
     hero1: null,
     hero2: null,
+    hero3: null,
+    hero4: null,
     flop1: null,
     flop2: null,
     flop3: null,
@@ -144,6 +148,8 @@ describe("Home page wiring", () => {
     fakeState.slots = {
       hero1: makeCard("Q", "s"),
       hero2: makeCard("J", "s"),
+      hero3: null,
+      hero4: null,
       flop1: makeCard("T", "s"),
       flop2: makeCard("9", "s"),
       flop3: makeCard("8", "h"),

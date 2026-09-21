@@ -4,13 +4,16 @@ import type { ArchetypeKey } from "@/data/archetypeRanges";
 import { GameMode, Street, Position, PotType } from "@/domain/hand";
 
 export type SlotName =
-  | "hero1" | "hero2"
+  | "hero1" | "hero2" | "hero3" | "hero4"
   | "flop1" | "flop2" | "flop3"
   | "turn" | "river";
 
 const SLOT_ORDER: SlotName[] = [
   "hero1", "hero2", "flop1", "flop2", "flop3", "turn", "river",
 ];
+
+const NLHE_SLOT_ORDER: SlotName[] = ["hero1", "hero2", "flop1", "flop2", "flop3", "turn", "river"];
+const PLO_SLOT_ORDER: SlotName[] = ["hero1", "hero2", "hero3", "hero4", "flop1", "flop2", "flop3", "turn", "river"];
 
 export interface HandStore {
   // Card slots
@@ -25,6 +28,7 @@ export interface HandStore {
 
   // Game settings
   gameMode: GameMode;
+  gameType: "nlhe" | "plo";
 
   // Strategy context
   heroPosition: Position | undefined;
@@ -47,6 +51,7 @@ export interface HandStore {
   setVillainStack: (v: number | undefined) => void;
   setIsAllIn: (v: boolean) => void;
   setGameMode: (mode: GameMode) => void;
+  setGameType: (t: "nlhe" | "plo") => void;
   setHeroPosition: (p: Position | undefined) => void;
   setVillainPosition: (p: Position | undefined) => void;
   setVillainArchetype: (a: ArchetypeKey | undefined) => void;
@@ -57,7 +62,7 @@ export interface HandStore {
 }
 
 const EMPTY_SLOTS: Record<SlotName, Card | null> = {
-  hero1: null, hero2: null,
+  hero1: null, hero2: null, hero3: null, hero4: null,
   flop1: null, flop2: null, flop3: null,
   turn: null, river: null,
 };
@@ -70,6 +75,7 @@ export const useHandStore = create<HandStore>((set, get) => ({
   villainStack: undefined,
   isAllIn: false,
   gameMode: "cash",
+  gameType: "nlhe",
   heroPosition: undefined,
   villainPosition: undefined,
   villainArchetype: undefined,
@@ -93,11 +99,12 @@ export const useHandStore = create<HandStore>((set, get) => ({
     const newSlots = { ...slots, [activeSlot]: card };
 
     // Auto-advance to next empty slot
-    const currentIdx = SLOT_ORDER.indexOf(activeSlot);
+    const slotOrder = get().gameType === "plo" ? PLO_SLOT_ORDER : NLHE_SLOT_ORDER;
+    const currentIdx = slotOrder.indexOf(activeSlot);
     let nextSlot: SlotName | null = null;
-    for (let i = currentIdx + 1; i < SLOT_ORDER.length; i++) {
-      if (newSlots[SLOT_ORDER[i]] === null) {
-        nextSlot = SLOT_ORDER[i];
+    for (let i = currentIdx + 1; i < slotOrder.length; i++) {
+      if (newSlots[slotOrder[i]] === null) {
+        nextSlot = slotOrder[i];
         break;
       }
     }
@@ -117,6 +124,26 @@ export const useHandStore = create<HandStore>((set, get) => ({
   setVillainStack: (v) => set({ villainStack: v }),
   setIsAllIn: (v) => set({ isAllIn: v }),
   setGameMode: (mode) => set({ gameMode: mode }),
+  setGameType: (t) => {
+    const { gameMode, heroStack, villainStack, heroPosition, villainPosition, preflopAggressor, potType, numPlayers, villainArchetype } = get();
+    set({
+      slots: { ...EMPTY_SLOTS },
+      pot: 0,
+      amountToCall: 0,
+      isAllIn: false,
+      activeSlot: "hero1",
+      gameType: t,
+      gameMode,
+      heroStack,
+      villainStack,
+      heroPosition,
+      villainPosition,
+      preflopAggressor,
+      potType,
+      numPlayers,
+      villainArchetype,
+    });
+  },
   setHeroPosition: (p) => set({ heroPosition: p }),
   setVillainPosition: (p) => set({ villainPosition: p }),
   setVillainArchetype: (a) => set({ villainArchetype: a }),
@@ -125,7 +152,7 @@ export const useHandStore = create<HandStore>((set, get) => ({
   setNumPlayers: (n) => set({ numPlayers: n }),
 
   newHand: () => {
-    const { gameMode, heroStack, villainStack, heroPosition, villainPosition, villainArchetype, preflopAggressor, potType, numPlayers } = get();
+    const { gameMode, gameType, heroStack, villainStack, heroPosition, villainPosition, villainArchetype, preflopAggressor, potType, numPlayers } = get();
     set({
       slots: { ...EMPTY_SLOTS },
       pot: 0,
@@ -142,12 +169,23 @@ export const useHandStore = create<HandStore>((set, get) => ({
       preflopAggressor,
       potType,
       numPlayers,
+      gameType,
     });
   },
 }));
 
 // Selector helpers (pure functions — call outside of Zustand to avoid re-renders)
 export function getHeroCards(slots: Record<SlotName, Card | null>): Card[] {
+  return [slots.hero1, slots.hero2].filter((c): c is Card => c !== null);
+}
+
+export function getHeroCardsForMode(
+  slots: Record<SlotName, Card | null>,
+  gameType: "nlhe" | "plo"
+): Card[] {
+  if (gameType === "plo") {
+    return [slots.hero1, slots.hero2, slots.hero3, slots.hero4].filter((c): c is Card => c !== null);
+  }
   return [slots.hero1, slots.hero2].filter((c): c is Card => c !== null);
 }
 
