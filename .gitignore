@@ -10,6 +10,13 @@
 !.yarn/releases
 !.yarn/versions
 
+# distribution artifacts
+/out
+/out.zip
+/poker-companion.zip
+/build.log
+*.tsbuildinfo
+
 # testing
 /coverage
 
