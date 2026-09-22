@@ -12,9 +12,10 @@ interface Props {
   amountUnit?: "R" | "BB";
   heroPosition?: Position;
   villainPosition?: Position;
+  onAddToPot?: (amount: number) => void;
 }
 
-export default function PreflopAdvicePanel({ advice, preflopActionSize, bigBlind = 0, amountUnit = "R", heroPosition, villainPosition }: Props) {
+export default function PreflopAdvicePanel({ advice, preflopActionSize, bigBlind = 0, amountUnit = "R", heroPosition, villainPosition, onAddToPot }: Props) {
   const openSizeBB = preflopActionSize ? parseFloat(preflopActionSize.match(/(\d+\.?\d*)/)?.[1] ?? "") : NaN;
   const isIP = heroPosition && villainPosition
     ? (POSITION_RANK[heroPosition] ?? 0) > (POSITION_RANK[villainPosition] ?? 0)
@@ -54,22 +55,36 @@ export default function PreflopAdvicePanel({ advice, preflopActionSize, bigBlind
       {responseSizeBB !== null && (
         <div className="flex justify-between gap-2">
           <span className="text-gray-500 text-sm shrink-0">Suggested 3-bet</span>
-          <span className="text-white text-sm text-right">
+          <span className="flex items-center justify-end gap-2 text-white text-sm text-right">
             {amountUnit === "BB" || bigBlind <= 0
               ? `${responseSizeBB.toFixed(1)}bb (${isIP === true ? "3.0" : isIP === false ? "3.5" : "3.25"}×)`
               : `R\u00a0${responseSizeR!.toLocaleString("en-ZA")}\u00a0(${responseSizeBB.toFixed(1)}bb)`
             }
+            {onAddToPot && responseSizeR !== null && (
+              <button
+                onClick={() => onAddToPot(responseSizeR!)}
+                title="Add suggested 3-bet to pot"
+                className="rounded border border-[#2A2A35] bg-[#1A1A1F] px-1.5 py-0.5 text-[11px] font-bold text-gray-300 transition-colors hover:bg-[#2A2A3F]"
+              >+</button>
+            )}
           </span>
         </div>
       )}
       {isoSizeBB !== null && bigBlind > 0 && (
         <div className="flex justify-between gap-2">
           <span className="text-gray-500 text-sm shrink-0">Suggested ISO</span>
-          <span className="text-white text-sm text-right">
+          <span className="flex items-center justify-end gap-2 text-white text-sm text-right">
             {amountUnit === "BB"
               ? `${isoSizeBB}bb`
               : `R\u00a0${isoSizeR!.toLocaleString("en-ZA")}\u00a0(${isoSizeBB}bb)`
             }
+            {onAddToPot && isoSizeR !== null && (
+              <button
+                onClick={() => onAddToPot(isoSizeR!)}
+                title="Add suggested ISO to pot"
+                className="rounded border border-[#2A2A35] bg-[#1A1A1F] px-1.5 py-0.5 text-[11px] font-bold text-gray-300 transition-colors hover:bg-[#2A2A3F]"
+              >+</button>
+            )}
           </span>
         </div>
       )}

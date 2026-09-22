@@ -441,6 +441,7 @@ export default function Home() {
                 amountUnit={amountUnit}
                 heroPosition={heroPosition}
                 villainPosition={villainPosition}
+                onAddToPot={(amount) => setPot(pot + amount)}
               />
             </section>
           )}
