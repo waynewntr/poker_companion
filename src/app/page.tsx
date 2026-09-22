@@ -432,6 +432,11 @@ export default function Home() {
 
         {/* RIGHT COLUMN — decision + strategy results */}
         <div className="flex flex-col gap-4">
+          {preflopAdvice && (
+            <section className="rounded-lg border border-[#2A2A35] bg-[#1A1A1F] p-4">
+              <PreflopAdvicePanel advice={preflopAdvice} />
+            </section>
+          )}
           {heroCards.length === requiredHeroCards && board.length >= 3 && decisionResult ? (
             <>
               <section className="space-y-4 rounded-lg border border-[#2A2A35] bg-[#1A1A1F] p-4">
@@ -449,12 +454,6 @@ export default function Home() {
                 <DrawSummary drawAnalysis={drawAnalysis} outsResult={outsResult} />
                 <StackSummary bigBlind={bigBlind} amountUnit={amountUnit} />
               </section>
-
-              {preflopAdvice && (
-                <section className="rounded-lg border border-[#2A2A35] bg-[#1A1A1F] p-4">
-                  <PreflopAdvicePanel advice={preflopAdvice} />
-                </section>
-              )}
 
               {strategyResult && (
                 <section className="rounded-lg border border-[#2A2A35] bg-[#1A1A1F] p-4">
