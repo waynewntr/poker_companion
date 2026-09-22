@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { StrategyResult, StrategyStyle } from "@/strategy/rangeContext";
 import { suggestBetSizes } from "@/strategy/betSizing";
-import { formatMoney } from "./MoneyInput";
+import { convertAmount } from "@/state/handStore";
 
 const STYLE_LABELS: Record<StrategyStyle, string> = {
   SMALL_FREQUENT: "Small / Frequent",
@@ -23,12 +23,21 @@ const CONFIDENCE_CLASS: Record<string, string> = {
 interface Props {
   strategy: StrategyResult;
   pot: number;
+  bigBlind?: number;
+  amountUnit?: "R" | "BB";
 }
 
-export default function StrategyPanel({ strategy, pot }: Props) {
+export default function StrategyPanel({ strategy, pot, bigBlind = 0, amountUnit = "R" }: Props) {
   const [open, setOpen] = useState(true);
   const { boardTexture, rangeAdvantage, nutAdvantage, style, suggestedBetSizes, confidence, explanation } = strategy;
   const absoluteSizes = suggestBetSizes(pot, suggestedBetSizes);
+
+  // Convert sizes to display unit
+  const displaySizes = absoluteSizes.map(size =>
+    amountUnit === "BB" && bigBlind > 0
+      ? convertAmount(size, "R", "BB", bigBlind).toFixed(2)
+      : size.toLocaleString("en-ZA")
+  );
 
   return (
     <div className="border-t border-[#2A2A35] pt-4">
@@ -64,7 +73,7 @@ export default function StrategyPanel({ strategy, pot }: Props) {
             <span className="text-gray-500">Suggested size</span>
             <span className="text-white">
               {suggestedBetSizes.map(f => `${Math.round(f * 100)}%`).join("–")}
-              {pot > 0 && ` (${absoluteSizes.map(v => formatMoney(v)).join("–")})`}
+              {pot > 0 && ` (${displaySizes.join("–")})`}
             </span>
           </div>
           <div className="flex justify-between">

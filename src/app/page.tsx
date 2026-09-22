@@ -30,6 +30,7 @@ import {
   getSPR,
   SlotName,
   useHandStore,
+  convertAmount,
 } from "@/state/handStore";
 import { analyzeBoardTexture } from "@/strategy/boardTexture";
 import { getFlopStrategy } from "@/strategy/flopStrategy";
@@ -274,10 +275,10 @@ export default function Home() {
             {/* Pot and Call side by side; pot = pre-bet amount (villain's bet NOT yet included) */}
             <div className="flex items-end gap-2">
               <div className="flex-1">
-                <MoneyInput label="Pot" value={pot} onChange={setPot} stacked />
+                <MoneyInput label="Pot" value={pot} onChange={setPot} stacked bigBlind={bigBlind} amountUnit={amountUnit} />
               </div>
               <div className="flex-1 relative">
-                <MoneyInput label="Call" value={amountToCall} onChange={setAmountToCall} stacked />
+                <MoneyInput label="Call" value={amountToCall} onChange={setAmountToCall} stacked bigBlind={bigBlind} amountUnit={amountUnit} />
                 {amountToCall > 0 && (
                   <button
                     onClick={() => setAmountToCall(0)}
@@ -302,7 +303,7 @@ export default function Home() {
               Pot = amount before villain&apos;s bet · Call = villain&apos;s bet · + advances the pot after you call
             </p>
 
-            {pot > 0 && <BetSizeButtons pot={pot + amountToCall} onSelect={setAmountToCall} />}
+            {pot > 0 && <BetSizeButtons pot={pot + amountToCall} onSelect={setAmountToCall} bigBlind={bigBlind} amountUnit={amountUnit} />}
 
             {gameType === "plo" && amountToCall > 0 && pot > 0 && (
               <div className="flex items-center gap-2">
@@ -312,7 +313,9 @@ export default function Home() {
                   title="Set call to PLO pot-maximum"
                   className="rounded border border-amber-800 bg-[#1A1A1F] px-2 py-1 text-[11px] font-bold text-amber-400 transition-colors hover:bg-amber-900/20"
                 >
-                  {`R ${(pot + 3 * amountToCall).toLocaleString("en-ZA")}`}
+                  {amountUnit === "BB" && bigBlind > 0
+                    ? `${convertAmount(pot + 3 * amountToCall, "R", "BB", bigBlind).toFixed(2)} BB`
+                    : `R ${(pot + 3 * amountToCall).toLocaleString("en-ZA")}`}
                 </button>
               </div>
             )}
@@ -410,8 +413,8 @@ export default function Home() {
               Stack sizes (optional)
             </summary>
             <div className="mt-3 space-y-3">
-              <MoneyInput label="My Stack" value={heroStack ?? 0} onChange={(value) => setHeroStack(value || undefined)} />
-              <MoneyInput label="Villain" value={villainStack ?? 0} onChange={(value) => setVillainStack(value || undefined)} />
+              <MoneyInput label="My Stack" value={heroStack ?? 0} onChange={(value) => setHeroStack(value || undefined)} bigBlind={bigBlind} amountUnit={amountUnit} />
+              <MoneyInput label="Villain" value={villainStack ?? 0} onChange={(value) => setVillainStack(value || undefined)} bigBlind={bigBlind} amountUnit={amountUnit} />
             </div>
           </details>
         </div>
@@ -428,15 +431,17 @@ export default function Home() {
                   pot={pot}
                   amountToCall={amountToCall}
                   equityLabel={activeDecision.equityLabel}
+                  bigBlind={bigBlind}
+                  amountUnit={amountUnit}
                 />
 
                 <DrawSummary drawAnalysis={drawAnalysis} outsResult={outsResult} />
-                <StackSummary />
+                <StackSummary bigBlind={bigBlind} amountUnit={amountUnit} />
               </section>
 
               {strategyResult && (
                 <section className="rounded-lg border border-[#2A2A35] bg-[#1A1A1F] p-4">
-                  <StrategyPanel strategy={strategyResult} pot={pot} />
+                  <StrategyPanel strategy={strategyResult} pot={pot} bigBlind={bigBlind} amountUnit={amountUnit} />
                 </section>
               )}
 
@@ -503,7 +508,9 @@ export default function Home() {
                             <span className="text-gray-500">Suggested open</span>
                             <span className="flex items-center justify-end gap-2 text-right text-white">
                               {openAmount !== null
-                                ? `R ${openAmount.toLocaleString("en-ZA")} (${multiplier}×BB)`
+                                ? amountUnit === "BB" && bigBlind > 0
+                                  ? `${convertAmount(openAmount, "R", "BB", bigBlind).toFixed(2)}bb (${multiplier}×BB)`
+                                  : `R ${openAmount.toLocaleString("en-ZA")} (${multiplier}×BB)`
                                 : `${multiplier}× BB`}
                               {openAmount !== null && (
                                 <button
@@ -523,7 +530,9 @@ export default function Home() {
                                   {posLabel && <span className="ml-1 text-gray-600">({posLabel})</span>}
                                 </span>
                                 <span className="flex items-center justify-end gap-2 text-right text-white">
-                                  {`R ${raiseAmount.toLocaleString("en-ZA")} (${raiseMultiplier}×)`}
+                                  {amountUnit === "BB" && bigBlind > 0
+                                    ? `${convertAmount(raiseAmount, "R", "BB", bigBlind).toFixed(2)}bb (${raiseMultiplier}×)`
+                                    : `R ${raiseAmount.toLocaleString("en-ZA")} (${raiseMultiplier}×)`}
                                   <button
                                     onClick={() => setPot(pot + raiseAmount)}
                                     title="Add suggested raise to pot"

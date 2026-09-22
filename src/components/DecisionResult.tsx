@@ -1,7 +1,7 @@
 "use client";
 
 import type { DecisionResult as DecisionResultType } from "@/poker/decisionEngine";
-import { formatMoney } from "@/components/MoneyInput";
+import { convertAmount } from "@/state/handStore";
 
 const SIGNAL_CONFIG = {
   CALL: { emoji: "🟢", label: "CALL", class: "text-green-500" },
@@ -25,14 +25,24 @@ interface Props {
   pot: number;
   amountToCall: number;
   equityLabel?: string;
+  bigBlind?: number;
+  amountUnit?: "R" | "BB";
 }
 
-export default function DecisionResult({ result, currentHand, pot, amountToCall, equityLabel = "Draw probability" }: Props) {
+export default function DecisionResult({ result, currentHand, pot, amountToCall, equityLabel = "Draw probability", bigBlind = 0, amountUnit = "R" }: Props) {
   const { signal, requiredEquity, comparisonProbability, margin, reason, impliedOdds } = result;
   const cfg = SIGNAL_CONFIG[signal];
 
+  // Format display values based on unit
+  const displayPot = amountUnit === "BB" && bigBlind > 0
+    ? convertAmount(pot, "R", "BB", bigBlind)
+    : pot;
+  const displayCall = amountUnit === "BB" && bigBlind > 0
+    ? convertAmount(amountToCall, "R", "BB", bigBlind)
+    : amountToCall;
+
   // Format plain numbers for the formula (no currency symbol needed in maths)
-  const fmtN = (v: number) => v.toLocaleString("en-ZA");
+  const fmtN = (v: number) => amountUnit === "BB" ? v.toFixed(2) : v.toLocaleString("en-ZA");
 
   return (
     <div className="space-y-3">
@@ -54,7 +64,7 @@ export default function DecisionResult({ result, currentHand, pot, amountToCall,
         {/* Maths formula sits under required equity, spanning full width */}
         {amountToCall > 0 && (
           <span className="col-span-2 text-[11px] text-gray-600 font-mono pb-1">
-            {fmtN(amountToCall)} / ({fmtN(pot)} + {fmtN(amountToCall)} + {fmtN(amountToCall)}) = {pct(requiredEquity)}
+            {fmtN(displayCall)} / ({fmtN(displayPot)} + {fmtN(displayCall)} + {fmtN(displayCall)}) = {pct(requiredEquity)}
           </span>
         )}
 
@@ -83,7 +93,9 @@ export default function DecisionResult({ result, currentHand, pot, amountToCall,
         <div className="text-xs text-gray-400 border-t border-[#2A2A35] pt-2 mt-2">
           <span>Additional future winnings required: </span>
           <span className="text-white">
-            {formatMoney(Math.round(impliedOdds.futureWinningsRequired))}
+            {amountUnit === "BB" && bigBlind > 0
+              ? convertAmount(Math.round(impliedOdds.futureWinningsRequired), "R", "BB", bigBlind).toFixed(2)
+              : Math.round(impliedOdds.futureWinningsRequired).toLocaleString("en-ZA")}
           </span>
           {impliedOdds.effectiveStackAvailable !== undefined && (
             <span className={impliedOdds.possible ? " text-green-400" : " text-red-400"}>
