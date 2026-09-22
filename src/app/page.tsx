@@ -55,6 +55,7 @@ export default function Home() {
   const preflopAggressor = useHandStore((state) => state.preflopAggressor);
   const potType = useHandStore((state) => state.potType);
   const numPlayers = useHandStore((state) => state.numPlayers);
+  const amountUnit = useHandStore((state) => state.amountUnit);
 
   const setPot = useHandStore((state) => state.setPot);
   const setAmountToCall = useHandStore((state) => state.setAmountToCall);
@@ -64,6 +65,7 @@ export default function Home() {
   const setGameMode = useHandStore((state) => state.setGameMode);
   const setGameType = useHandStore((state) => state.setGameType);
   const newHand = useHandStore((state) => state.newHand);
+  const setAmountUnit = useHandStore((state) => state.setAmountUnit);
 
   // Blind amounts persist for the session but are table meta, not hand state
   const [smallBlind, setSmallBlind] = useState(0);
@@ -190,18 +192,27 @@ export default function Home() {
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-6">
       {/* Header — full width */}
-      <header className="mb-6 space-y-3">
+      <header className="sticky top-0 z-10 bg-[#0D0D0F] mb-6 space-y-3">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-gray-500">Poker Odds Companion</p>
             <h1 className="mt-1 text-lg font-black tracking-tight text-white">Local Poker HUD</h1>
           </div>
-          <button
-            onClick={newHand}
-            className="rounded border border-[#2A2A35] bg-[#1A1A1F] px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-gray-300 transition-colors hover:bg-[#2A2A3F]"
-          >
-            New Hand
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setAmountUnit(amountUnit === "R" ? "BB" : "R")}
+              className="rounded border border-[#2A2A35] bg-[#1A1A1F] px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-gray-300 transition-colors hover:bg-[#2A2A3F]"
+              title="Toggle unit between R and BB"
+            >
+              {amountUnit}
+            </button>
+            <button
+              onClick={newHand}
+              className="rounded border border-[#2A2A35] bg-[#1A1A1F] px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-gray-300 transition-colors hover:bg-[#2A2A3F]"
+            >
+              New Hand
+            </button>
+          </div>
         </div>
 
         <div className="flex items-center justify-between gap-3">
