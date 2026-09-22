@@ -16,14 +16,14 @@ const PREFLOP_ACTIONS = [
 ] as const;
 
 const ACTION_LABELS: Record<typeof PREFLOP_ACTIONS[number], string> = {
-  "OPEN_RAISE": "OPEN_RAISE",
-  "LIMP": "LIMP",
-  "CALL_OPEN": "CALL_OPEN",
-  "THREE_BET": "THREE_BET",
-  "FOUR_BET": "FOUR_BET",
-  "ISO_RAISE": "ISO_RAISE",
-  "SQUEEZE": "SQUEEZE",
-  "FOLD": "FOLD",
+  "OPEN_RAISE": "Open Raise",
+  "LIMP": "Limp",
+  "CALL_OPEN": "Call Open",
+  "THREE_BET": "3-Bet",
+  "FOUR_BET": "4-Bet",
+  "ISO_RAISE": "ISO Raise",
+  "SQUEEZE": "Squeeze",
+  "FOLD": "Fold",
 };
 
 const ACTIONS_WITH_SIZING = new Set(["OPEN_RAISE", "THREE_BET", "FOUR_BET", "ISO_RAISE", "SQUEEZE"]);
@@ -84,7 +84,7 @@ export default function GameContext() {
         <div className="flex items-end gap-2">
           <div className="flex-1">
             <span className="block text-[11px] uppercase tracking-widest text-gray-500 mb-1">
-              Action
+              Villain's Action
             </span>
             <select
               value={preflopAction ?? ""}

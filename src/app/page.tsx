@@ -15,6 +15,8 @@ import RangeThreatPanel from "@/components/RangeThreat";
 import StackSummary from "@/components/StackSummary";
 import StrategyPanel from "@/components/StrategyPanel";
 import { getVillainCombos, handToType, isHandInRange, ARCHETYPE_LABELS } from "@/data/archetypeRanges";
+import { getPreflopAdvice } from "@/data/preflopRanges";
+import PreflopAdvicePanel from "@/components/PreflopAdvicePanel";
 import { calculateDecision } from "@/poker/decisionEngine";
 import { detectDraws } from "@/poker/draws";
 import { evaluateBestHand } from "@/poker/evaluator";
@@ -171,6 +173,11 @@ export default function Home() {
       villainPosition,
     );
   }, [villainArchetype, villainPosition, heroCards, board, currentHand, requiredHeroCards]);
+
+  const preflopAdvice = useMemo(
+    () => getPreflopAdvice(preflopAction, heroPosition, villainPosition, villainArchetype ?? undefined),
+    [preflopAction, heroPosition, villainPosition, villainArchetype]
+  );
 
   // When RANGE_REQUIRED fires but villain range is loaded, compute equity directly from the range
   const activeDecision = useMemo(() => {
@@ -442,6 +449,12 @@ export default function Home() {
                 <DrawSummary drawAnalysis={drawAnalysis} outsResult={outsResult} />
                 <StackSummary bigBlind={bigBlind} amountUnit={amountUnit} />
               </section>
+
+              {preflopAdvice && (
+                <section className="rounded-lg border border-[#2A2A35] bg-[#1A1A1F] p-4">
+                  <PreflopAdvicePanel advice={preflopAdvice} />
+                </section>
+              )}
 
               {strategyResult && (
                 <section className="rounded-lg border border-[#2A2A35] bg-[#1A1A1F] p-4">
