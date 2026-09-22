@@ -434,7 +434,14 @@ export default function Home() {
         <div className="flex flex-col gap-4">
           {preflopAdvice && (
             <section className="rounded-lg border border-[#2A2A35] bg-[#1A1A1F] p-4">
-              <PreflopAdvicePanel advice={preflopAdvice} />
+              <PreflopAdvicePanel
+                advice={preflopAdvice}
+                preflopActionSize={preflopActionSize}
+                bigBlind={bigBlind}
+                amountUnit={amountUnit}
+                heroPosition={heroPosition}
+                villainPosition={villainPosition}
+              />
             </section>
           )}
           {heroCards.length === requiredHeroCards && board.length >= 3 && decisionResult ? (
@@ -467,7 +474,7 @@ export default function Home() {
                 </section>
               )}
             </>
-          ) : heroCards.length === requiredHeroCards && board.length === 0 ? (
+          ) : heroCards.length === requiredHeroCards && board.length === 0 && !preflopAction ? (
             gameType === "plo" ? (
               <PloPreflopPanel heroCards={heroCards} />
             ) : (
