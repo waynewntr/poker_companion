@@ -8,6 +8,8 @@ export type SlotName =
   | "flop1" | "flop2" | "flop3"
   | "turn" | "river";
 
+export type PreflopAction = "OPEN_RAISE" | "LIMP" | "CALL_OPEN" | "THREE_BET" | "FOUR_BET" | "ISO_RAISE" | "SQUEEZE" | "FOLD" | undefined;
+
 const NLHE_SLOT_ORDER: SlotName[] = ["hero1", "hero2", "flop1", "flop2", "flop3", "turn", "river"];
 const PLO_SLOT_ORDER: SlotName[] = ["hero1", "hero2", "hero3", "hero4", "flop1", "flop2", "flop3", "turn", "river"];
 
@@ -31,6 +33,9 @@ export interface HandStore {
   villainPosition: Position | undefined;
   villainArchetype: ArchetypeKey | undefined;
   preflopAggressor: "hero" | "villain" | undefined;
+  preflopAction: PreflopAction;
+  preflopActionSize: string | null;
+  amountUnit: "R" | "BB";
   potType: PotType | undefined;
   numPlayers: number;
 
@@ -52,6 +57,9 @@ export interface HandStore {
   setVillainPosition: (p: Position | undefined) => void;
   setVillainArchetype: (a: ArchetypeKey | undefined) => void;
   setPreflopAggressor: (a: "hero" | "villain" | undefined) => void;
+  setPreflopAction: (action: PreflopAction) => void;
+  setPreflopActionSize: (size: string | null) => void;
+  setAmountUnit: (unit: "R" | "BB") => void;
   setPotType: (t: PotType | undefined) => void;
   setNumPlayers: (n: number) => void;
   newHand: () => void;
@@ -76,6 +84,9 @@ export const useHandStore = create<HandStore>((set, get) => ({
   villainPosition: undefined,
   villainArchetype: undefined,
   preflopAggressor: undefined,
+  preflopAction: undefined,
+  preflopActionSize: null,
+  amountUnit: "R",
   potType: undefined,
   numPlayers: 2,
   activeSlot: "hero1",
@@ -121,7 +132,7 @@ export const useHandStore = create<HandStore>((set, get) => ({
   setIsAllIn: (v) => set({ isAllIn: v }),
   setGameMode: (mode) => set({ gameMode: mode }),
   setGameType: (t) => {
-    const { gameMode, heroStack, villainStack, heroPosition, villainPosition, preflopAggressor, potType, numPlayers, villainArchetype } = get();
+    const { gameMode, heroStack, villainStack, heroPosition, villainPosition, preflopAggressor, preflopAction, potType, numPlayers, villainArchetype, amountUnit } = get();
     set({
       slots: { ...EMPTY_SLOTS },
       pot: 0,
@@ -135,20 +146,25 @@ export const useHandStore = create<HandStore>((set, get) => ({
       heroPosition,
       villainPosition,
       preflopAggressor,
+      preflopAction,
       potType,
       numPlayers,
       villainArchetype,
+      amountUnit,
     });
   },
   setHeroPosition: (p) => set({ heroPosition: p }),
   setVillainPosition: (p) => set({ villainPosition: p }),
   setVillainArchetype: (a) => set({ villainArchetype: a }),
   setPreflopAggressor: (a) => set({ preflopAggressor: a }),
+  setPreflopAction: (action) => set({ preflopAction: action }),
+  setPreflopActionSize: (size) => set({ preflopActionSize: size }),
+  setAmountUnit: (unit) => set({ amountUnit: unit }),
   setPotType: (t) => set({ potType: t }),
   setNumPlayers: (n) => set({ numPlayers: n }),
 
   newHand: () => {
-    const { gameMode, gameType, heroStack, villainStack, heroPosition, villainPosition, villainArchetype, preflopAggressor, potType, numPlayers } = get();
+    const { gameMode, gameType, heroStack, villainStack, heroPosition, villainPosition, villainArchetype, preflopAggressor, potType, numPlayers, amountUnit } = get();
     set({
       slots: { ...EMPTY_SLOTS },
       pot: 0,
@@ -163,12 +179,44 @@ export const useHandStore = create<HandStore>((set, get) => ({
       villainPosition,
       villainArchetype,
       preflopAggressor,
+      preflopAction: undefined,
+      preflopActionSize: null,
       potType,
       numPlayers,
       gameType,
+      amountUnit,
     });
   },
 }));
+
+/**
+ * Convert an amount between currency units (R or BB)
+ * @param value - The amount to convert
+ * @param fromUnit - The source unit ("R" or "BB")
+ * @param toUnit - The target unit ("R" or "BB")
+ * @param bigBlind - The big blind amount (used as conversion reference)
+ * @returns The converted amount, rounded to 2 decimal places
+ */
+export function convertAmount(
+  value: number,
+  fromUnit: "R" | "BB",
+  toUnit: "R" | "BB",
+  bigBlind: number
+): number {
+  if (fromUnit === toUnit) {
+    return value;
+  }
+
+  if (fromUnit === "R" && toUnit === "BB") {
+    return Math.round((value / bigBlind) * 100) / 100;
+  }
+
+  if (fromUnit === "BB" && toUnit === "R") {
+    return Math.round((value * bigBlind) * 100) / 100;
+  }
+
+  return value;
+}
 
 // Selector helpers (pure functions — call outside of Zustand to avoid re-renders)
 export function getHeroCards(slots: Record<SlotName, Card | null>): Card[] {
