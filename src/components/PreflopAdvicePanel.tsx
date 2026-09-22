@@ -1,12 +1,15 @@
 "use client";
+import type { Card } from "@/domain/cards";
 import type { Position } from "@/domain/hand";
 import type { PreflopAdvice } from "@/data/preflopRanges";
+import { handToType } from "@/data/archetypeRanges";
 import { convertAmount } from "@/state/handStore";
 
 const POSITION_RANK: Partial<Record<Position, number>> = { UTG: 0, HJ: 1, CO: 2, BTN: 3, SB: 4, BB: 5 };
 
 interface Props {
   advice: PreflopAdvice;
+  heroCards?: Card[];
   preflopActionSize?: string | null;
   bigBlind?: number;
   amountUnit?: "R" | "BB";
@@ -15,7 +18,7 @@ interface Props {
   onAddToPot?: (amount: number) => void;
 }
 
-export default function PreflopAdvicePanel({ advice, preflopActionSize, bigBlind = 0, amountUnit = "R", heroPosition, villainPosition, onAddToPot }: Props) {
+export default function PreflopAdvicePanel({ advice, heroCards, preflopActionSize, bigBlind = 0, amountUnit = "R", heroPosition, villainPosition, onAddToPot }: Props) {
   const openSizeBB = preflopActionSize ? parseFloat(preflopActionSize.match(/(\d+\.?\d*)/)?.[1] ?? "") : NaN;
   const isIP = heroPosition && villainPosition
     ? (POSITION_RANK[heroPosition] ?? 0) > (POSITION_RANK[villainPosition] ?? 0)
@@ -31,9 +34,27 @@ export default function PreflopAdvicePanel({ advice, preflopActionSize, bigBlind
   const isoMultiplier = advice.suggestedAction === "ISO Raise" ? (isIP === false ? 5 : 4) : null;
   const isoSizeBB = isoMultiplier;
   const isoSizeR = isoSizeBB !== null && bigBlind > 0 ? isoSizeBB * bigBlind : null;
+
+  const handType = heroCards?.length === 2 ? handToType(heroCards[0], heroCards[1]) : null;
+  const inValue  = handType !== null && advice.valueRange.includes(handType);
+  const inMix    = handType !== null && advice.mixRange.includes(handType);
+  const signal   = inValue ? "value" : inMix ? "mix" : handType ? "fold" : null;
   return (
     <div className="space-y-2">
       <span className="text-xs uppercase tracking-widest text-gray-500">Preflop Response</span>
+      {signal && (
+        <div className={`text-2xl font-black ${
+          signal === "value" ? "text-green-500" :
+          signal === "mix"   ? "text-amber-400" :
+                               "text-red-500"
+        }`}>
+          {signal === "value"
+            ? `\u{1F7E2} ${advice.suggestedAction.split(" ")[0].toUpperCase()}`
+            : signal === "mix"
+            ? "\u{1F7E1} MIX / CALL"
+            : "\u{1F534} NOT IN RANGE"}
+        </div>
+      )}
       <div className="flex justify-between">
         <span className="text-gray-500 text-sm">Suggested</span>
         <span className="text-white text-sm">{advice.suggestedAction}</span>

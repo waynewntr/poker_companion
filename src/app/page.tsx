@@ -436,6 +436,7 @@ export default function Home() {
             <section className="rounded-lg border border-[#2A2A35] bg-[#1A1A1F] p-4">
               <PreflopAdvicePanel
                 advice={preflopAdvice}
+                heroCards={heroCards}
                 preflopActionSize={preflopActionSize}
                 bigBlind={bigBlind}
                 amountUnit={amountUnit}
