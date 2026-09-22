@@ -1,4 +1,5 @@
 import { Card } from "./cards";
+import type { PreflopAction } from "@/state/handStore";
 
 export type GameMode = "cash" | "tournament";
 export type Street = "preflop" | "flop" | "turn" | "river";
@@ -21,6 +22,8 @@ export interface PreFlopContext {
   heroPosition?: Position;
   villainPosition?: Position;
   preflopAggressor?: "hero" | "villain";
+  preflopAction?: PreflopAction;
+  preflopActionSize?: string | null;
   potType?: PotType;
   numPlayers: number;
 }

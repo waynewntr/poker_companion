@@ -4,6 +4,8 @@ import type { StrategyConfidence, StrategyResult, StrategyStyle } from "./rangeC
 import { estimateRangeAdvantage } from "./rangeAdvantage";
 import { estimateNutAdvantage } from "./nutAdvantage";
 
+// TODO: Refine recommendations based on preflopAction and preflopActionSize
+
 function getConfidence(context: PreFlopContext, board: BoardAnalysis): StrategyConfidence {
   if (context.numPlayers > 2) return "LOW";
   if (!context.heroPosition || !context.villainPosition || !context.preflopAggressor) return "LOW";

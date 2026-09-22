@@ -54,6 +54,8 @@ export default function Home() {
   const villainPosition = useHandStore((state) => state.villainPosition);
   const villainArchetype = useHandStore((state) => state.villainArchetype);
   const preflopAggressor = useHandStore((state) => state.preflopAggressor);
+  const preflopAction = useHandStore((state) => state.preflopAction);
+  const preflopActionSize = useHandStore((state) => state.preflopActionSize);
   const potType = useHandStore((state) => state.potType);
   const numPlayers = useHandStore((state) => state.numPlayers);
   const amountUnit = useHandStore((state) => state.amountUnit);
@@ -103,10 +105,12 @@ export default function Home() {
       heroPosition,
       villainPosition,
       preflopAggressor,
+      preflopAction,
+      preflopActionSize,
       potType,
       numPlayers,
     }),
-    [heroPosition, villainPosition, preflopAggressor, potType, numPlayers],
+    [heroPosition, villainPosition, preflopAggressor, preflopAction, preflopActionSize, potType, numPlayers],
   );
 
   const { outsResult, drawAnalysis, currentHand, decisionResult, strategyResult } = useMemo(() => {
