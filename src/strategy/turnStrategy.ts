@@ -4,7 +4,7 @@ import type { StrategyConfidence, StrategyResult, StrategyStyle } from "./rangeC
 import { estimateRangeAdvantage } from "./rangeAdvantage";
 import { estimateNutAdvantage } from "./nutAdvantage";
 
-// TODO: Refine recommendations based on preflopAction and preflopActionSize
+// eslint-disable-next-line prefer-const
 
 export function getTurnStrategy(
   context: PreFlopContext,
@@ -14,7 +14,7 @@ export function getTurnStrategy(
   const rangeAdvantage = estimateRangeAdvantage(context, board);
   const nutAdvantage = estimateNutAdvantage(context, board);
 
-  let confidence: StrategyConfidence =
+  const confidence: StrategyConfidence =
     context.numPlayers > 2 || !context.preflopAggressor || !context.heroPosition || !context.villainPosition
       ? "LOW"
       : "MEDIUM";

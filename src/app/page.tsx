@@ -172,7 +172,7 @@ export default function Home() {
       villainArchetype,
       villainPosition,
     );
-  }, [villainArchetype, villainPosition, heroCards, board, currentHand, requiredHeroCards]);
+  }, [villainArchetype, villainPosition, heroCards, board, currentHand, requiredHeroCards, gameType]);
 
   const preflopAdvice = useMemo(
     () => getPreflopAdvice(preflopAction, heroPosition, villainPosition, villainArchetype ?? undefined),

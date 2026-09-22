@@ -1,6 +1,6 @@
 "use client";
 
-import { SUITS, RANKS, SUIT_SYMBOLS, SUIT_TEXT_CLASS_MAP, cardKey } from "@/domain/cards";
+import { SUITS, SUIT_SYMBOLS, SUIT_TEXT_CLASS_MAP, cardKey } from "@/domain/cards";
 import { useHandStore, getAllUsedCards } from "@/state/handStore";
 
 const RANKS_DISPLAY = ["A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2"] as const;

@@ -4,7 +4,7 @@ import type { StrategyConfidence, StrategyResult, StrategyStyle } from "./rangeC
 import { estimateRangeAdvantage } from "./rangeAdvantage";
 import { estimateNutAdvantage } from "./nutAdvantage";
 
-// TODO: Refine recommendations based on preflopAction and preflopActionSize
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 
 function getConfidence(context: PreFlopContext, board: BoardAnalysis): StrategyConfidence {
   if (context.numPlayers > 2) return "LOW";
@@ -17,6 +17,7 @@ function getConfidence(context: PreFlopContext, board: BoardAnalysis): StrategyC
 export function getFlopStrategy(
   context: PreFlopContext,
   board: BoardAnalysis,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _spr: number,
 ): StrategyResult {
   const confidence = getConfidence(context, board);

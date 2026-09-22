@@ -84,7 +84,7 @@ export default function GameContext() {
         <div className="flex items-end gap-2">
           <div className="flex-1">
             <span className="block text-[11px] uppercase tracking-widest text-gray-500 mb-1">
-              Villain's Action
+              Villain&apos;s Action
             </span>
             <select
               value={preflopAction ?? ""}

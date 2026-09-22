@@ -4,6 +4,7 @@ import { useHandStore, convertAmount } from "@/state/handStore";
 describe("handStore", () => {
   beforeEach(() => {
     // Reset store before each test
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { newHand } = useHandStore.getState();
     useHandStore.setState({
       slots: {
