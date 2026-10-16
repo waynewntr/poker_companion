@@ -3,7 +3,6 @@ import type { Card } from "@/domain/cards";
 import type { Position } from "@/domain/hand";
 import type { PreflopAdvice } from "@/data/preflopRanges";
 import { handToType } from "@/data/archetypeRanges";
-import { convertAmount } from "@/state/handStore";
 
 const POSITION_RANK: Partial<Record<Position, number>> = { UTG: 0, HJ: 1, CO: 2, BTN: 3, SB: 4, BB: 5 };
 
